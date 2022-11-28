@@ -45,7 +45,9 @@ With this the configuration is finished. The software can be flashed into the ES
   - leakage protection (switch)
   - output hardness (input number slider)
 
-This Project based of infomations from:
+
+
+This Project based of informations from:
 - https://blog.muwave.de/2017/06/monitoring-and-controlling-a-judo-i-soft-plus-water-softening-device-via-lan/
 - https://forum.fhem.de/index.php/topic,115696.15.html
 - https://knx-user-forum.de/forum/projektforen/edomi/1453632-lbs19002090-judo-i-soft-wasserenth%C3%A4rtungsanlage/page2
