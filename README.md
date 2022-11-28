@@ -29,7 +29,22 @@ https://www.myjudo.eu/interface/?token=INSERT_TOKEN_HERE&group=register&command=
 
 As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under #define SERIALNUMBER.
 
-With this the configuration is finished. The software can be flashed into the ESP. Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities.
+With this the configuration is finished. The software can be flashed into the ESP. Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
+
+- reading: 
+  - total water consumption
+  - total softwater consumption
+  - salt stock
+  - salt range
+  - output hardness
+  - input hardness
+  - water flow (untestet)
+  - capacity of battery
+  - number of regenerations
+
+writing:
+  - water lock
+  - output hardness
 
 
 
