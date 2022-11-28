@@ -31,18 +31,18 @@
 #define WLAN_SSID       		"my_wifi_ssid"
 #define WLAN_PASS       		"my_wifi_pass"
 #define MQTT_SERVER     		"192.168.2.5"
-#define MQTT_SERVERPORT 		1883                   // use 8883 for SSL
+#define MQTT_SERVERPORT 		1883     // use 8883 for SSL
 #define MQTT_USERNAME   		"mqttuser"
 #define MQTT_KEY        		"mqtt_pass"
-#define LOCATION				"my_location"
-#define NAME 					"Judo_isoftplus_bridge"
-//#define OTA_PASS				"admin"
-#define STATE_UPDATE_INTERVAL	20000 					//[ms]
-#define AVAILABILITY_ONLINE "online"
-#define AVAILABILITY_OFFLINE "offline"
+#define LOCATION			"my_location"
+#define NAME 				"Judo_isoftplus_bridge"
+//#define OTA_PASS			"admin"
+#define STATE_UPDATE_INTERVAL		20000 	//[ms]
+#define AVAILABILITY_ONLINE 		"online"
+#define AVAILABILITY_OFFLINE 		"offline"
 
-#define TOKEN "1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d"
-#define SERIALNUMBER "123456789123"
+#define TOKEN 				"1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d"
+#define SERIALNUMBER 			"123456789123"
 
 #define DEBUG
 
