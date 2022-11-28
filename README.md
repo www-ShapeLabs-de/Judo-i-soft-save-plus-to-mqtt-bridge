@@ -19,7 +19,7 @@ In the software you have to configure the #define-macros (wifi, mqtt-server, loc
 
 It is necessary to generate a token. To do this, log into the cloud service with your user account on https://www.myjudo.eu.
 
-After the successful login, you can copy the token from the URL in the address bar of the browser.
+After the successful login, you can copy the token (just take the "knmtoken" not the "judotoken") from the URL in the address bar of the browser.
 
 The token must then be inserted under #define TOKEN in the code.
 
