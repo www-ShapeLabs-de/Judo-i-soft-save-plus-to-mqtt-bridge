@@ -1,4 +1,4 @@
-# Judo i-soft save+ 2 mqtt bridge
+# Judo i-soft save+ to mqtt bridge
 A small device to write and read settings to Judo i-soft safe+ water softening system with homeassistant.
 
 
@@ -8,7 +8,7 @@ Unfortunately it is not possible to communicate directly with this version of th
 
 Notice:
 There are 2 versions of the system, which sound very similar.
-- i- soft safe+ (small display, leakage protection) --->This repo
+- i-soft safe+ (small display, leakage protection) --->This repo
 - i-soft plus (large graphic display) ---> another tutorials, like this: https://blog.muwave.de/2017/06/monitoring-and-controlling-a-judo-i-soft-plus-water-softening-device-via-lan/
 
 To do this, you must register the system for the cloud service as described in the user manual and create a user account. There is also a judo smartphone app for this, but it is of course nicer to have everything in homeassisant :-)
