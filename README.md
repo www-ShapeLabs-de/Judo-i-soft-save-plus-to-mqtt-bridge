@@ -1,4 +1,4 @@
-# Judo i-soft save+ to mqtt bridge for homeassisant
+# Judo i-soft save+ to mqtt bridge for homeassistant
 A small device to write and read settings to Judo i-soft safe+ water softening system with homeassistant.
 
 
