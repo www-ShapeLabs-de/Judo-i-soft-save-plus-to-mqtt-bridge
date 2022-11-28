@@ -41,8 +41,7 @@ With this the configuration is finished. The software can be flashed into the ES
   - water flow (untestet)
   - capacity of battery
   - number of regenerations
-
-writing:
+- writing:
   - leakage protection
   - output hardness
 
