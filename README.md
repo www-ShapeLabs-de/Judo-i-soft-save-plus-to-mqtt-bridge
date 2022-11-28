@@ -43,7 +43,7 @@ With this the configuration is finished. The software can be flashed into the ES
   - number of regenerations
 
 writing:
-  - water lock
+  - leakage protection
   - output hardness
 
 
