@@ -534,7 +534,8 @@ else if (pos && !water_lock)//CLOSE
 			Serial.println("-->HTTP ERROR!");
 			return 0;
 		}
-	}	
+	}
+	return 0;
 }
 
 void set_water_hardness(uint8_t val)
