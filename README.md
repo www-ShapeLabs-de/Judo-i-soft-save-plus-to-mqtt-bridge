@@ -4,7 +4,7 @@ A small device to write and read settings to Judo i-soft safe+ water softening s
 
 This is a small workarount to read and control the Judo isoft safe+ water softener with homeassisant (hassio). It is the version with the small character-lcd and leakage protection.
 
-Unfortunately it is not possible to communicate directly with this version of the plant. Port 8000 and port 8124, through which the system can be read out with the Judo isoft-plus, are closed. The only way to access settings and data is via the cloud server.
+Unfortunately it is not possible to communicate directly with this version of the plant. Port 8000 and port 8124, through which the system can be read out on the Judo isoft-plus, are closed. The only way to access settings and data is via the cloud server.
 
 Notice:
 There are 2 versions of the system, which sound very similar.
