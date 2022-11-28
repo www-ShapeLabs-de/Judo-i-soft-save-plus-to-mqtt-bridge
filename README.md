@@ -31,7 +31,7 @@ As a response you get the complete data set, which also contains the serial numb
 
 With this the configuration is finished. The software can be flashed into the ESP. Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
 
-- reading: 
+- reading (sensors): 
   - total water consumption
   - total softwater consumption
   - salt stock
@@ -42,8 +42,14 @@ With this the configuration is finished. The software can be flashed into the ES
   - capacity of battery
   - number of regenerations
 - writing:
-  - leakage protection
-  - output hardness
+  - leakage protection (switch)
+  - output hardness (input number slider)
 
+This Project based of infomations from:
+- https://blog.muwave.de/2017/06/monitoring-and-controlling-a-judo-i-soft-plus-water-softening-device-via-lan/
+- https://forum.fhem.de/index.php/topic,115696.15.html
+- https://knx-user-forum.de/forum/projektforen/edomi/1453632-lbs19002090-judo-i-soft-wasserenth%C3%A4rtungsanlage/page2
+- https://github.com/arteck/iobroker.judoisoft/blob/master/lib/dataConverter.js
 
+Many thanks to this guys!!!
 
