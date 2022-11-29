@@ -55,9 +55,8 @@ char MQTT_TOPIC_AVAILABILITY[128];
 char MQTT_TOPIC_STATE[128];
 char MQTT_TOPIC_COMMAND[128];
 char device_info[127];
-
-long total_water_consumption = 0;
-long total_softwater_consumption = 0;
+float total_water_consumption = 0;
+float total_softwater_consumption = 0;
 int salt_stock = 0;
 int salt_range = 0;
 
@@ -189,18 +188,18 @@ void mqttReconnect()
 			Serial.println("Sending Autoconfig....");
 
 			publish_autoconfig_entity("WiFi","dBm","mdi:wifi",3);
-			publish_autoconfig_entity("Gesamtwasserverbrauch","L","mdi:water",3);
-			publish_autoconfig_entity("Gesamtweichwasserverbrauch","L","mdi:water-outline",3);
+			publish_autoconfig_entity("Gesamtwasserverbrauch","m³","mdi:water",0);
+			publish_autoconfig_entity("Gesamtweichwasserverbrauch","m³","mdi:water-outline",0);
 			publish_autoconfig_entity("Salzvorrat","g","mdi:gradient-vertical",3);
 			publish_autoconfig_entity("Salzreichweite","Tage","mdi:chevron-triple-right",3);
 			publish_autoconfig_entity("Wunschwasserhaerte","°dH","mdi:water-minus",1);
 			publish_autoconfig_entity("Restwasserhaerte","°dH","mdi:water-minus",3);
 			publish_autoconfig_entity("Rohwasserhaerte","°dH","mdi:water-plus",3);
-			publish_autoconfig_entity("Wasserdurchflussmenge","L/min","mdi:waves-arrow-right",3);
+			publish_autoconfig_entity("Wasserdurchflussmenge","L/h","mdi:waves-arrow-right",3);
 			publish_autoconfig_entity("Batterierestkapazität","%","mdi:battery-50",3);
 			publish_autoconfig_entity("Regenerationen"," ","mdi:recycle-variant",3);
 			publish_autoconfig_entity("ESP_Reset"," ","mdi:replay" ,2);
-			publish_autoconfig_entity("Wasser_Absperren"," ","mdi:pipe-valve" ,2);
+			publish_autoconfig_entity("Leckageschutz"," ","mdi:pipe-valve" ,2);
 			Serial.println("Subscribing Topics....");
 			mqttClient.subscribe(MQTT_TOPIC_COMMAND);
 			Serial.println("Success!");
@@ -242,22 +241,22 @@ void publishState()
 		Serial.println(" dH");
 		Serial.print("Wasserdurchflussmenge: ");
 		Serial.print(water_flow);
-		Serial.println(" Lpm");
+		Serial.println(" L per hour");
 		Serial.print("Batterierestkapazitaet: ");
 		Serial.print(batt_capacity);
 		Serial.println(" Prozent");
 		Serial.print("Anzahl Regenerationen: ");
 		Serial.println(regenerations);
-		Serial.print("Wasser Abgesperrt: ");
-		Serial.println(water_lock)
+		Serial.print("Leckageschutz: ");
+		Serial.println(water_lock);
 		Serial.println(" ");
 		Serial.println(" ");
 	#endif
 		
 	stateJson["ESP_Reset"] = "off";
 	stateJson["WiFi"] = WiFi.RSSI();
-	stateJson["Gesamtwasserverbrauch"] = String(total_water_consumption);
-	stateJson["Gesamtweichwasserverbrauch"] = String(total_softwater_consumption);
+	stateJson["Gesamtwasserverbrauch"] = String(total_water_consumption/1000, 3);
+	stateJson["Gesamtweichwasserverbrauch"] = String(total_softwater_consumption/1000,3);
 	stateJson["Salzvorrat"] = String(salt_stock);
 	stateJson["Salzreichweite"] = String(salt_range);
 	stateJson["Restwasserhaerte"] = String(output_hardness);
@@ -268,9 +267,9 @@ void publishState()
 	stateJson["Regenerationen"] = String(regenerations);
 
 	if (water_lock)
-		stateJson["Wasser_Absperren"] = "on";
+		stateJson["Leckageschutz"] = "on";
 	else
-		stateJson["Wasser_Absperren"] = "off";
+		stateJson["Leckageschutz"] = "off";
 
 	serializeJson(stateJson, payload);
 	mqttClient.publish(MQTT_TOPIC_STATE, payload, true);
@@ -292,7 +291,7 @@ void mqttCallback (char* topic, byte* payload, unsigned int length)
 			String reset = commandJson["ESP_Reset"].as<String>();
 			if (reset == "on")
 				Reset_ESP();									//ECHO
-			String water_lock_sw = commandJson["Wasser_Absperren"].as<String>();
+			String water_lock_sw = commandJson["Leckageschutz"].as<String>();
 
 			if (water_lock_sw == "on")
 				switch_valve(1);
@@ -308,7 +307,7 @@ void mqttCallback (char* topic, byte* payload, unsigned int length)
 	}
 }
 
-//TYPE: 1=Input-Number, 2=Switch, 3=Sensor
+//TYPE: 0=Water-Meter 1=Input-Number, 2=Switch, 3=Sensor
 void publish_autoconfig_entity(const char value_name[], const char unit[], const char icon[], uint8_t type)
 {
 	char mqttPayload[1024];
@@ -328,6 +327,13 @@ void publish_autoconfig_entity(const char value_name[], const char unit[], const
 	autoconfPayload["unique_id"] = identifier + String("_") + value_name;
 	autoconfPayload["icon"] = icon;
 	autoconfPayload["value_template"] = String("{{value_json.") + value_name + String("}}");
+
+	if(type==0)
+	{
+		autoconfPayload["device_class"] = "water";
+		autoconfPayload["state_class"] = "total_increasing";
+		type = 3;
+	}
 	
 	if(type==1)
 	{
@@ -443,8 +449,8 @@ void parse_data()
 	sub_b = val.substring(54,56);
 	input_hardness = strtol(sub_b.c_str(), NULL, 16);
 
-	sub_c = val.substring(32,34);
-	sub_d = val.substring(34,36);
+	sub_c = val.substring(34,36);
+	sub_d = val.substring(36,38);
 	val = sub_d + sub_c;
 	water_flow = strtol(val.c_str(), NULL, 16);
 
@@ -493,17 +499,8 @@ if(!pos && water_lock)//OPEN
 		if(getRequest(valve_action))
 		{
 			publishState();
-
-			if(!water_lock)
-			{
-				Serial.println("-->Leckageschutz geöffnet");
-				return 1;
-			}
-			else
-			{
-				Serial.println("-->ERROR!");
-				return 0;
-			}
+			Serial.println("-->Leckageschutz wird geöffnet");
+			return 1;
 		}
 		else
 		{
@@ -518,27 +515,19 @@ else if (pos && !water_lock)//CLOSE
 		if(getRequest(valve_action))
 		{
 			publishState();
-			if(water_lock)
-			{
-				Serial.println("-->Leckageschutz geschlossen");
-				return 1;
-			}
-			else
-			{
-				Serial.println("-->ERROR!");
-				return 0;
-			}
+			Serial.println("-->Leckageschutz wird geschlossen");
+			return 1;
 		}
 		else
 		{
 			Serial.println("-->HTTP ERROR!");
 			return 0;
 		}
-	}
+	}	
 	return 0;
 }
 
-void set_water_hardness(uint8_t val)
+bool set_water_hardness(uint8_t val)
 {
 	if(val < 1) val = 1;
 	else if(val > 15) val =15;
@@ -557,20 +546,13 @@ void set_water_hardness(uint8_t val)
 	if(getRequest(hardness_action))
 	{
 		publishState();
-
-		Serial.print("-->Wunschwasserhaerte auf ");
-		Serial.print(output_hardness);
-		Serial.println("dh eingestellt");
-
+		return 1;
 	}
 	else
+	{
 		Serial.println("-->HTTP ERROR!");
+		return 0;
+	}
 }
-
-
-
-
-
-
 
 
