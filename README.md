@@ -38,7 +38,7 @@ With this the configuration is finished. The software can be flashed into the ES
   - salt range
   - output hardness
   - input hardness
-  - water flow (untestet)
+  - water flow
   - capacity of battery
   - number of regenerations
 - writing:
