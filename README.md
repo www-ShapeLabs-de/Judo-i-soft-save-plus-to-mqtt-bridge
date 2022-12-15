@@ -1,6 +1,4 @@
 # Judo i-soft save+ to mqtt bridge for homeassistant
-A small device to write and read settings to Judo i-soft safe+ water softening system with homeassistant.
-
 
 This is a small workarount to read and control the Judo isoft safe+ water softener with homeassisant (hassio). It is the version with the small character-lcd and leakage protection.
 
@@ -13,25 +11,36 @@ There are 2 versions of the system, which sound very similar.
 
 To do this, you must register the system for the cloud service as described in the user manual and create a user account. There is also a judo smartphone app for this, but it is of course nicer to have everything in homeassisant :-)
 
+
+
+I've made two Versions of this Project:
+
+### First Version: esp8266
+
+A small device to write and read settings to Judo i-soft safe+ water softening system with homeassistant.
 The hardware of this project consists of an ESP8266 in basic circuitry. You can also just use a node MCU etc.. No further components are necessary.
 
-In the software you have to configure the #define-macros (wifi, mqtt-server, location, name etc).
 
-It is necessary to generate a token. To do this, log into the cloud service with your user account on https://www.myjudo.eu.
+### Second Version: python
 
+This is a small script which can be executed on any platform. It only needs to be configured via config_getjudo.py.
+On Linux platforms it is best to include it in the systemd-manager.
+
+### Config (both versions)
+In both versions, it is necessary to generate a token. To do this, log into the cloud service with your user account on https://www.myjudo.eu.
 After the successful login, you can copy the hexadecimal-token (just take the "knmtoken" not the "judotoken") from the URL in the address bar of the browser.
 
-The token must then be inserted under #define TOKEN in the code.
-
+The token must then be inserted under TOKEN in the code.
 The token can be used to create a URL that can also be used to read out the serial number and all other data:
 
 https://www.myjudo.eu/interface/?token=INSERT_TOKEN_HERE&group=register&command=get%20device%20data
 
-As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under #define SERIALNUMBER.
+As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under SERIALNUMBER.
 
-With this the configuration is finished. The software can be flashed into the ESP. Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
+With this the configuration is finished. The software can now be flashed into the ESP, respectively the script can be executed . Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
 
 - reading (sensors): 
+  - next revision
   - total water consumption
   - total softwater consumption
   - salt stock
