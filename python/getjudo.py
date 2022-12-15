@@ -1,9 +1,9 @@
 #!/urs/bin/python3
-
 import urllib3
 import json
 import time
-import config_getjudo.py
+import gc
+import config_getjudo
 from paho.mqtt import client as mqtt
 
 class entity():
@@ -17,10 +17,10 @@ class entity():
     def send_entity_autoconfig(self):
         device_config = {
             "identifiers": f"[{client_id}]",
-            "manufacturer": MANUFACTURER,
-            "model": NAME,
+            "manufacturer": config_getjudo.MANUFACTURER,
+            "model": config_getjudo.NAME,
             "name": client_id,
-            "sw_version": SW_VERSION
+            "sw_version": config_getjudo.SW_VERSION
         }
 
         entity_config = {
@@ -36,7 +36,8 @@ class entity():
         if self.entity_type == "total_increasing":
             entity_config["device_class"] = "water"
             entity_config["state_class"] = self.entity_type
-            entity_config["unit_of_measurement"] = self.unit;
+            entity_config["unit_of_measurement"] = self.unit
+            self.entity_type = "sensor"
 
         elif self.entity_type == "number":
             entity_config["command_topic"] = command_topic
@@ -47,39 +48,32 @@ class entity():
 
         elif self.entity_type == "switch":
             entity_config["command_topic"] = command_topic
-            entity_config["payload_on"] = "{\"" + self.name + "\": \"on\"}"
-            entity_config["payload_off"] = "{\"" + self.name + "\": \"off\"}"
-            entity_config["state_on"] = "on"
-            entity_config["state_off"] = "off"
+            entity_config["payload_on"] = "{\"" + self.name + "\": 1}"
+            entity_config["payload_off"] = "{\"" + self.name + "\": 0}"
+            entity_config["state_on"] = "1"
+            entity_config["state_off"] = "0"
 
         elif self.entity_type == "sensor":
-            entity_config["unit_of_measurement"] = self.unit;
+            entity_config["unit_of_measurement"] = self.unit
 
         else:
             print ("autoconf ERROR!!")
 
-        autoconf_topic = f"homeassistant/{self.entity_type}/{LOCATION}/{NAME}_{self.name}/config"
-        
+        autoconf_topic = f"homeassistant/{self.entity_type}/{config_getjudo.LOCATION}/{config_getjudo.NAME}_{self.name}/config"
         publish_json(client, autoconf_topic, entity_config)
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connected to MQTT Broker...")
         client.subscribe(command_topic)
-        print("Subscribing Topics...")
-        total_water.send_entity_autoconfig()
-        total_softwater.send_entity_autoconfig()
-        salt_stock.send_entity_autoconfig()
-        salt_range.send_entity_autoconfig()
-        output_hardness.send_entity_autoconfig()
-        input_hardness.send_entity_autoconfig()
-        water_flow.send_entity_autoconfig()
-        batt_capacity.send_entity_autoconfig()
-        regenerations.send_entity_autoconfig()
-        water_lock.send_entity_autoconfig()
-        print("Sending Autoconfigs...")
+        print("Topics has been subscribed...")
+        
+        client.publish(availability_topic, config_getjudo.AVAILABILITY_ONLINE)
 
-        client.publish(availability_topic, AVAILABILITY_ONLINE)
+        for obj in gc.get_objects():
+            if isinstance(obj, entity):
+                obj.send_entity_autoconfig()
+        print("Autoconfigs has been sent...")
     else:
         print("Failed to connect, return code %d\n", rc)
 
@@ -113,7 +107,7 @@ def set_outp_hardness(hardness):
 
     hex_str = hex(hardness)[2:]
 
-    cmd_response = http.request('GET',f"https://www.myjudo.eu/interface/?token={TOKEN}&group=register&command=write%20data&serial_number={SERIAL}&dt=0x33&index=60&data=0{hex_str}&da=0x1&role=customer&action=normal")
+    cmd_response = http.request('GET',f"https://www.myjudo.eu/interface/?token={config_getjudo.TOKEN}&group=register&command=write%20data&serial_number={config_getjudo.SERIAL}&dt=0x33&index=60&data=0{hex_str}&da=0x1&role=customer&action=normal")
     cmd_response_json = json.loads(cmd_response.data)
 
     if cmd_response_json["status"] == "ok":
@@ -121,15 +115,14 @@ def set_outp_hardness(hardness):
     else:
         print("HTTP Error while setting the output_hardness")
 
-def set_water_lock(pos)
-    if pos == "off" or pos == "on":
-        if pos == "on":
-            pos_code = "72"
-        elif pos == "off"
-            pos_code = "73"
+def set_water_lock(pos):
+    pos = int(pos)
 
-        cmd_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={TOKEN}&group=register&command=write%20data&serial_number={SERIAL})&dt=0x33&index={pos_code}&data=&da=0x1&role=customer")
+    if pos < 2:
+        pos_code = str(73 - pos)
 
+        cmd_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={config_getjudo.TOKEN}&group=register&command=write%20data&serial_number={config_getjudo.SERIAL}&dt=0x33&index={pos_code}&data=&da=0x1&role=customer")
+        cmd_response_json = json.loads(cmd_response.data)
         if cmd_response_json["status"] == "ok":
             print(f"Leackage protection has been switched {pos} successfully ")
         else:
@@ -138,36 +131,41 @@ def set_water_lock(pos)
         print("Command_Error!!")
 
 #INIT
-command_topic =f"{LOCATION}/{NAME}/command"
-state_topic = f"{LOCATION}/{NAME}/state"
-availability_topic = f"{LOCATION}/{NAME}/status"
-client_id = f"{NAME}-{LOCATION}"
+command_topic =f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/command"
+state_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/state"
+availability_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/status"
+client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 
 http = urllib3.PoolManager()
 
+next_revision = entity("Revision", "Tage", "mdi:account-wrench", "sensor", 0)
 total_water = entity("Gesamtwasserverbrauch", "m³","mdi:water", "total_increasing", 0)
 total_softwater = entity("Gesamtweichwasserverbrauch", "m³","mdi:water-outline", "total_increasing", 0)
-salt_stock = entity("Salzvorrat", "g", "mdi:gradient-vertical", "sensor", 0)
+salt_stock = entity("Salzvorrat", "kg", "mdi:gradient-vertical", "sensor", 0)
 salt_range = entity("Salzreichweite", "Tage", "mdi:chevron-triple-right", "sensor", 0)
 output_hardness = entity("Wunschwasserhaerte", "°dH", "mdi:water-minus", "number", 0)
 input_hardness = entity("Rohwasserhaerte", "°dH", "mdi:water-plus", "sensor", 0)
 water_flow = entity("Wasserdurchflussmenge", "L/h", "mdi:waves-arrow-right", "sensor", 0)
-batt_capacity = entity("Batterierestkapazität", "%", "mdi:battery-50", "sensor", 0)
+batt_capacity = entity("Batterierestkapazitaet", "%", "mdi:battery-50", "sensor", 0)
 regenerations = entity("Regenerationen", " ", "mdi:recycle-variant", "sensor", 0)
 water_lock = entity("Leckageschutz", " ", "mdi:pipe-valve", "switch", 0)
 
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
-client.username_pw_set(MQTTUSER, MQTTPASSWD)
-client.connect(BROKER, PORT, 60)
+client.username_pw_set(config_getjudo.MQTTUSER, config_getjudo.MQTTPASSWD)
+client.connect(config_getjudo.BROKER, config_getjudo.PORT, 60)
 client.loop_start()
 
 #MAIN LOOP
 while True:
     print("Sending GET to Cloud-Service...")
-    response = http.request('GET',f"https://www.myjudo.eu/interface/?token={TOKEN}&group=register&command=get%20device%20data")
+    response = http.request('GET',f"https://www.myjudo.eu/interface/?token={config_getjudo.TOKEN}&group=register&command=get%20device%20data")
     response_json = json.loads(response.data)
+
+    #Next revision in days #7
+    val = response_json["data"][0]["data"][0]["data"]["7"]["data"]
+    next_revision.value = int(int(val[2:4] + val[0:2],16)/24)
 
     #Total Water Consumption #8
     val = response_json["data"][0]["data"][0]["data"]["8"]["data"]
@@ -181,48 +179,37 @@ while True:
 
     #Salt Stock & Salt Range #94
     val = response_json["data"][0]["data"][0]["data"]["94"]["data"]
-    salt_stock.value = int((val[2:4] + val[0:2]),16)
+    salt_stock.value = int((val[2:4] + val[0:2]),16)/1000
     salt_range.value = int((val[6:8] + val[4:6]),16)
 
-    #Input/Output Hardness, Durchflussmenge #790
+    #Input/Output Hardness, Water flow rate #790
     val =response_json["data"][0]["data"][0]["data"]["790"]["data"] 
     output_hardness.value = int(val[18:20],16)
     input_hardness.value = int(val[54:56],16)
     input_hardness.value = float(input_hardness.value)/2 + 2
     water_flow.value = int((val[36:38] + val[34:36]),16)
 
-    #Regnerationen #791
+    #Regnerations #791
     val = response_json["data"][0]["data"][0]["data"]["791"]["data"]
     regenerations.value = int((val[64:66] + val[62:64]),16)
 
-    #Batteriekapazitaet #93
+    #Battery capacity #93
     val = response_json["data"][0]["data"][0]["data"]["93"]["data"]
     batt_capacity.value = int(val[6:8],16)
 
-    #Leckageschutz #792
+    #Leakage protection valve #792
     val = response_json["data"][0]["data"][0]["data"]["792"]["data"]
     water_lock.value = int(val[2:4],16)
-    if water_lock.value:
-        water_lock.value = "on"
-    else:
-        water_lock.value = "off"
+    if water_lock.value > 1:
+        water_lock.value = 1
 
+    outp_val_dict = {}
+    for obj in gc.get_objects():
+        if isinstance(obj, entity):
+            outp_val_dict[obj.name] = str(obj.value)
 
-    outp_val_dict = {
-        total_water.name: str(total_water.value),
-        total_softwater.name: str(total_softwater.value),
-        salt_stock.name: str(salt_stock.value),
-        salt_range.name: str(salt_range.value),
-        output_hardness.name: str(output_hardness.value),
-        input_hardness.name: str(input_hardness.value),
-        water_flow.name: str(water_flow.value),
-        regenerations.name: str(regenerations.value),
-        batt_capacity.name: str(batt_capacity.value),
-        water_lock.name: water_lock.value
-    }
     print("Publishing values over MQTT....")
     publish_json(client, state_topic, outp_val_dict)
 
-    time.sleep(STATE_UPDATE_INTERVAL)
-
+    time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
 
