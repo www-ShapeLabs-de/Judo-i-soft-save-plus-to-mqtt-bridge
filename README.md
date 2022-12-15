@@ -39,6 +39,8 @@ As a response you get the complete data set, which also contains the serial numb
 
 With this the configuration is finished. The software can now be flashed into the ESP, respectively the script can be executed . Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
 
+![HASSIO autoconfig of this device](hassio_device_autconfig.png)
+
 - reading (sensors): 
   - next revision
   - total water consumption
