@@ -3,7 +3,7 @@
 import urllib3
 import json
 import time
-import getjudo_config.py
+import config_getjudo.py
 from paho.mqtt import client as mqtt
 
 class entity():
