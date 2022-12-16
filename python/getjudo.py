@@ -1,4 +1,6 @@
 #!/urs/bin/python3
+# -*- coding: utf-8 -*-
+
 import urllib3
 import json
 import time
@@ -62,6 +64,7 @@ class entity():
         autoconf_topic = f"homeassistant/{self.entity_type}/{config_getjudo.LOCATION}/{config_getjudo.NAME}_{self.name}/config"
         publish_json(client, autoconf_topic, entity_config)
 
+
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connected to MQTT Broker...")
@@ -76,6 +79,7 @@ def on_connect(client, userdata, flags, rc):
         print("Autoconfigs has been sent...")
     else:
         print("Failed to connect, return code %d\n", rc)
+
 
 #Callback
 def on_message(client, userdata, message):
@@ -99,6 +103,7 @@ def publish_json(client, topic, message):
         else:
             print(f"Failed to send message to topic {topic}")
 
+
 def set_outp_hardness(hardness):
     if hardness < 1:
         hardness = 1
@@ -115,9 +120,8 @@ def set_outp_hardness(hardness):
     else:
         print("HTTP Error while setting the output_hardness")
 
-def set_water_lock(pos):
-    pos = int(pos)
 
+def set_water_lock(pos):
     if pos < 2:
         pos_code = str(73 - pos)
 
@@ -130,6 +134,7 @@ def set_water_lock(pos):
     else:
         print("Command_Error!!")
 
+
 #INIT
 command_topic =f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/command"
 state_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/state"
@@ -138,7 +143,7 @@ client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 
 http = urllib3.PoolManager()
 
-next_revision = entity("Revision", "Tage", "mdi:account-wrench", "sensor", 0)
+next_revision = entity("Revision in", "Tagen", "mdi:account-wrench", "sensor", 0)
 total_water = entity("Gesamtwasserverbrauch", "m³","mdi:water", "total_increasing", 0)
 total_softwater = entity("Gesamtweichwasserverbrauch", "m³","mdi:water-outline", "total_increasing", 0)
 salt_stock = entity("Salzvorrat", "kg", "mdi:gradient-vertical", "sensor", 0)
@@ -153,7 +158,8 @@ water_lock = entity("Leckageschutz", " ", "mdi:pipe-valve", "switch", 0)
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
-client.username_pw_set(config_getjudo.MQTTUSER, config_getjudo.MQTTPASSWD)
+if config_getjudo.USE_MQTT_AUTH:
+    client.username_pw_set(config_getjudo.MQTTUSER, config_getjudo.MQTTPASSWD)
 client.connect(config_getjudo.BROKER, config_getjudo.PORT, 60)
 client.loop_start()
 
@@ -163,6 +169,7 @@ while True:
     response = http.request('GET',f"https://www.myjudo.eu/interface/?token={config_getjudo.TOKEN}&group=register&command=get%20device%20data")
     response_json = json.loads(response.data)
 
+    print("Parsing values from response...")
     #Next revision in days #7
     val = response_json["data"][0]["data"][0]["data"]["7"]["data"]
     next_revision.value = int(int(val[2:4] + val[0:2],16)/24)
@@ -203,13 +210,13 @@ while True:
     if water_lock.value > 1:
         water_lock.value = 1
 
+    print("Publishing parsed values over MQTT....")
     outp_val_dict = {}
     for obj in gc.get_objects():
         if isinstance(obj, entity):
             outp_val_dict[obj.name] = str(obj.value)
-
-    print("Publishing values over MQTT....")
     publish_json(client, state_topic, outp_val_dict)
 
+    print("Spend some time....")
     time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
 
