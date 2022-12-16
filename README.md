@@ -24,7 +24,37 @@ The hardware of this project consists of an ESP8266 in basic circuitry. You can 
 ### Second Version: python
 
 This is a small script which can be executed on any platform. It only needs to be configured via config_getjudo.py.
-On Linux platforms it is best to include it in the systemd-manager.
+On Linux platforms it is best to include it in the systemd-manager:
+
+Copy/Clone the getjudo.py and the config_getjudo.py to your home-folder or wherever you want. Then create a new systemd-service:
+```
+#sudo nano /etc/systemd/system/getjudo.service
+```
+
+```
+[Unit]
+Description=getjudo service
+After=multi-user.target
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 /home/<username>/getjudo.py
+[Install]
+WantedBy=multi-user.target
+```
+Reload the daemon:
+```
+#sudo systemctl daemon-reload
+```
+
+Enable the autostart, if our platform restarts e.g.:
+```
+#sudo systemctl enable getjudo.service
+```
+Start the service:
+```
+#sudo systemctl start getjudo.service
+```
 
 ### Config (both versions)
 In both versions, it is necessary to generate a token. To do this, log into the cloud service with your user account on https://www.myjudo.eu.
