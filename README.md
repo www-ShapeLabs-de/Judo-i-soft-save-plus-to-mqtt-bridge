@@ -28,7 +28,7 @@ On Linux platforms it is best to include it in the systemd-manager:
 
 Copy/Clone the getjudo.py and the config_getjudo.py to your home-folder or wherever you want. Then create a new systemd-service:
 ```
-#sudo nano /etc/systemd/system/getjudo.service
+$sudo nano /etc/systemd/system/getjudo.service
 ```
 
 ```
@@ -44,16 +44,16 @@ WantedBy=multi-user.target
 ```
 Reload the daemon:
 ```
-#sudo systemctl daemon-reload
+$sudo systemctl daemon-reload
 ```
 
 Enable the autostart, if our platform restarts e.g.:
 ```
-#sudo systemctl enable getjudo.service
+$sudo systemctl enable getjudo.service
 ```
 Start the service:
 ```
-#sudo systemctl start getjudo.service
+$sudo systemctl start getjudo.service
 ```
 
 ### Config (both versions)
