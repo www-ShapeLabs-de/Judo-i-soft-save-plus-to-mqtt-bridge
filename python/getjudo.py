@@ -52,8 +52,8 @@ class entity():
             entity_config["command_topic"] = command_topic
             entity_config["payload_on"] = "{\"" + self.name + "\": 1}"
             entity_config["payload_off"] = "{\"" + self.name + "\": 0}"
-            entity_config["state_on"] = "1"
-            entity_config["state_off"] = "0"
+            entity_config["state_on"] = 1
+            entity_config["state_off"] = 0
 
         elif self.entity_type == "sensor":
             entity_config["unit_of_measurement"] = self.unit
