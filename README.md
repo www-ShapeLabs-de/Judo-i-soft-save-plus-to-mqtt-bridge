@@ -71,11 +71,13 @@ In both versions, it is necessary to generate a token. To do this, log into the 
 After the successful login, you can copy the hexadecimal-token (just take the "knmtoken" not the "judotoken") from the URL in the address bar of the browser.
 
 The token must then be inserted under TOKEN in the code.
+
+```
+Only ESP:
 The token can be used to create a URL that can also be used to read out the serial number and all other data:
-
 https://www.myjudo.eu/interface/?token=INSERT_TOKEN_HERE&group=register&command=get%20device%20data
-
 As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under SERIALNUMBER.
+
 
 With this the configuration is finished. The software can now be flashed into the ESP, respectively the script can be executed . Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
 
@@ -85,7 +87,6 @@ With this the configuration is finished. The software can now be flashed into th
   - next revision
   - total water consumption
   - total softwater consumption
-  - salt stock
   - salt range
   - output hardness
   - input hardness
@@ -95,6 +96,8 @@ With this the configuration is finished. The software can now be flashed into th
 - writing:
   - leakage protection (switch)
   - output hardness (input number slider)
+  - salt stock (input number slider)
+  - triggering regeneration
 
 
 
