@@ -24,13 +24,18 @@ The hardware of this project consists of an ESP8266 in basic circuitry. You can 
 ### Second Version: python
 
 This is a small script which can be executed on any platform. It only needs to be configured via config_getjudo.py.
+
+It may still be necessary to install the paho-mqtt package:
+```
+$sudo pip install paho-mqtt
+```
+
 On Linux platforms it is best to include it in the systemd-manager:
 
 Copy/Clone the getjudo.py and the config_getjudo.py to your home-folder or wherever you want. Then create a new systemd-service:
 ```
 $sudo nano /etc/systemd/system/getjudo.service
 ```
-
 ```
 [Unit]
 Description=getjudo service
@@ -42,6 +47,11 @@ ExecStart=/usr/bin/python3 /home/<username>/getjudo.py
 [Install]
 WantedBy=multi-user.target
 ```
+User rights may still need to be assigned:
+```
+sudo chmod +x ~/*getjudo.py && chmod +x /etc/systemd/system/getjudo.service
+```
+
 Reload the daemon:
 ```
 $sudo systemctl daemon-reload
