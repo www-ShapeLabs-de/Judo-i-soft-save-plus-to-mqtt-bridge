@@ -15,7 +15,7 @@ To do this, you must register the system for the cloud service as described in t
 
 I've made two Versions of this Project:
 
-### First Version: esp8266
+### First Version: esp8266 (legacy)
 
 A small device to write and read settings to Judo i-soft safe+ water softening system with homeassistant.
 The hardware of this project consists of an ESP8266 in basic circuitry. You can also just use a node MCU etc.. No further components are necessary.
