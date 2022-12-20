@@ -49,7 +49,7 @@ WantedBy=multi-user.target
 ```
 User rights may still need to be assigned:
 ```
-sudo chmod +x ~/*getjudo.py && chmod +x /etc/systemd/system/getjudo.service
+sudo chmod +x /etc/systemd/system/getjudo.service && chmod +x ~/*getjudo.py
 ```
 
 Reload the daemon:
