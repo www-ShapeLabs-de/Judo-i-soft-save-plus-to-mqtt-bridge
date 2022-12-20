@@ -3,7 +3,6 @@
 
 #Judo Config
 TOKEN = "1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d"      #Just take the knmtoken from URL
-SERIAL = "1a2b3c4d5e6f"                         #Serial Number of Judo device
 
 #MQTT Config
 BROKER = "192.168.1.2"                          #Broker IP
@@ -17,7 +16,7 @@ PORT = 1883                                     #MQTT PORT, 1883 default standar
 LOCATION = "my_location"                        #Location of Judo device
 NAME = "Judo_isoftsaveplus"                     #Name of Judo device
 MANUFACTURER = "ShapeLabs.de"                   #CC BY-NC-SA 4.0
-SW_VERSION = "1.2"
+SW_VERSION = "1.3"
 STATE_UPDATE_INTERVAL = 20                      #Update interval in seconds
 AVAILABILITY_ONLINE = "online"
 
