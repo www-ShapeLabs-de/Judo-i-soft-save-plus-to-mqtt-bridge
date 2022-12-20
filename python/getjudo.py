@@ -9,12 +9,14 @@ import config_getjudo
 from paho.mqtt import client as mqtt
 
 class entity():
-    def __init__(self, name, unit, icon, entity_type, value):
+    def __init__(self, name, unit, icon, entity_type, value, minimum, maximum):
         self.name = name
         self.unit = unit
         self.icon = icon
         self.entity_type = entity_type #total_inc, sensor, number, switch, 
         self.value = value
+        self.minimum = minimum
+        self.maximum = maximum
 
     def send_entity_autoconfig(self):
         device_config = {
@@ -44,8 +46,8 @@ class entity():
         elif self.entity_type == "number":
             entity_config["command_topic"] = command_topic
             entity_config["unit_of_measurement"] = self.unit
-            entity_config["min"] = "1"
-            entity_config["max"] = "15"
+            entity_config["min"] = str(self.minimum)
+            entity_config["max"] = str(self.maximum)
             entity_config["command_template"] = "{\"" + self.name + "\": {{ value }}}"
 
         elif self.entity_type == "switch":
@@ -85,10 +87,19 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, message):
     print(f"Incomming Message: {message.topic}{message.payload}")
     command_json = json.loads(message.payload)
+    
     if output_hardness.name in command_json:
         set_outp_hardness(command_json[output_hardness.name])
+    
+    elif salt_stock.name in command_json:
+    	set_salt_stock(command_json[salt_stock.name])
+    
     elif water_lock.name in command_json:
         set_water_lock(command_json[water_lock.name])
+    
+    elif start_regeneration.name in command_json:
+        set_water_lock(command_json[start_regeneration.name])
+
     else:
         print("Command_Name_Error!!")
 
@@ -107,15 +118,11 @@ def publish_json(client, topic, message):
 def set_outp_hardness(hardness):
     if hardness < 1:
         hardness = 1
-    elif hardness >15:
+    elif hardness > 15:
         hardness = 15
 
-    hex_str = hex(hardness)[2:]
-
-    cmd_response = http.request('GET',f"https://www.myjudo.eu/interface/?token={config_getjudo.TOKEN}&group=register&command=write%20data&serial_number={config_getjudo.SERIAL}&dt=0x33&index=60&data=0{hex_str}&da=0x1&role=customer&action=normal")
-    cmd_response_json = json.loads(cmd_response.data)
-
-    if cmd_response_json["status"] == "ok":
+    hardness_str = "%0.2X" % hardness
+    if send_command("60", hardness_str):
         print(f"Output_hardness was successfully set to {str(hardness)}°dH")
     else:
         print("HTTP Error while setting the output_hardness")
@@ -123,11 +130,8 @@ def set_outp_hardness(hardness):
 
 def set_water_lock(pos):
     if pos < 2:
-        pos_code = str(73 - pos)
-
-        cmd_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={config_getjudo.TOKEN}&group=register&command=write%20data&serial_number={config_getjudo.SERIAL}&dt=0x33&index={pos_code}&data=&da=0x1&role=customer")
-        cmd_response_json = json.loads(cmd_response.data)
-        if cmd_response_json["status"] == "ok":
+        pos_index = str(73 - pos)
+        if send_command(pos_index, ""):
             print(f"Leackage protection has been switched {pos} successfully ")
         else:
             print("HTTP Error while setting the leackage protection")
@@ -135,6 +139,35 @@ def set_water_lock(pos):
         print("Command_Error!!")
 
 
+def set_salt_stock(mass): #0-50kg
+    if mass > 50:
+        mass = 50
+    elif mass < 0:
+        mass = 0
+    mass_str = "%0.4X" % (mass*1000)
+    mass_str = mass_str[2:4] + mass_str[0:2]
+    if send_command("94",mass_str):
+        print(f"Saltlevel set to {str(mass)}kg successfully")
+    else:
+        print("HTTP Error while setting the salt level")
+
+
+def start_regeneration():
+    if send_command("65", ""):
+        print("Regeneration has been started successfully")
+    else:
+        print("HTTP Error while setting the regeneration-trigger")
+
+
+def send_command(index, data):
+    cmd_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={config_getjudo.TOKEN}&group=register&command=write%20data&serial_number={my_serial}&dt={my_dt}&index={index}&data={data}&da={my_da}&role=customer")
+    cmd_response_json = json.loads(cmd_response.data)
+    if "status" in cmd_response_json:
+        if cmd_response_json["status"] == "ok":
+            return True
+    return False
+
+	
 #INIT
 command_topic =f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/command"
 state_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/state"
@@ -143,17 +176,19 @@ client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 
 http = urllib3.PoolManager()
 
-next_revision = entity("Revision in", "Tagen", "mdi:account-wrench", "sensor", 0)
-total_water = entity("Gesamtwasserverbrauch", "m³","mdi:water", "total_increasing", 0)
-total_softwater = entity("Gesamtweichwasserverbrauch", "m³","mdi:water-outline", "total_increasing", 0)
-salt_stock = entity("Salzvorrat", "kg", "mdi:gradient-vertical", "sensor", 0)
-salt_range = entity("Salzreichweite", "Tage", "mdi:chevron-triple-right", "sensor", 0)
-output_hardness = entity("Wunschwasserhaerte", "°dH", "mdi:water-minus", "number", 0)
-input_hardness = entity("Rohwasserhaerte", "°dH", "mdi:water-plus", "sensor", 0)
-water_flow = entity("Wasserdurchflussmenge", "L/h", "mdi:waves-arrow-right", "sensor", 0)
-batt_capacity = entity("Batterierestkapazitaet", "%", "mdi:battery-50", "sensor", 0)
-regenerations = entity("Regenerationen", " ", "mdi:recycle-variant", "sensor", 0)
-water_lock = entity("Leckageschutz", " ", "mdi:pipe-valve", "switch", 0)
+next_revision = entity("Revision in", "Tagen", "mdi:account-wrench", "sensor", 0,0,0)
+total_water = entity("Gesamtwasserverbrauch", "m³","mdi:water", "total_increasing", 0,0,0)
+total_softwater = entity("Gesamtweichwasserverbrauch", "m³","mdi:water-outline", "total_increasing", 0,0,0)
+salt_stock = entity("Salzvorrat", "kg", "mdi:gradient-vertical", "number", 0, 1, 50)
+salt_range = entity("Salzreichweite", "Tage", "mdi:chevron-triple-right", "sensor", 0,0,0)
+output_hardness = entity("Wunschwasserhaerte", "°dH", "mdi:water-minus", "number", 0, 1, 15)
+input_hardness = entity("Rohwasserhaerte", "°dH", "mdi:water-plus", "sensor", 0,0,0)
+water_flow = entity("Wasserdurchflussmenge", "L/h", "mdi:waves-arrow-right", "sensor", 0,0,0)
+batt_capacity = entity("Batterierestkapazitaet", "%", "mdi:battery-50", "sensor", 0,0,0)
+regenerations = entity("Anzahl_Regenerationen", " ", "mdi:recycle-variant", "sensor", 0,0,0)
+water_lock = entity("Leckageschutz", " ", "mdi:pipe-valve", "switch", 0,0,0)
+regeneration_start = entity("Regeneration", " ", "mdi:recycle-variant", "switch", 0 ,0, 0)
+#= entity_type("", "", "", "", 0 ,0, 0) #Name, Unit, Icon, Type, Initial Value, Min, Max 
 
 client = mqtt.Client()
 client.on_connect = on_connect
@@ -170,6 +205,11 @@ while True:
     response_json = json.loads(response.data)
 
     print("Parsing values from response...")
+    my_serial = response_json["data"][0]["serialnumber"]
+    my_da = response_json["data"][0]["data"][0]["da"]
+    my_dt = response_json["data"][0]["data"][0]["dt"]
+
+
     #Next revision in days #7
     val = response_json["data"][0]["data"][0]["data"]["7"]["data"]
     next_revision.value = int(int(val[2:4] + val[0:2],16)/24)
@@ -199,6 +239,9 @@ while True:
     #Regnerations #791
     val = response_json["data"][0]["data"][0]["data"]["791"]["data"]
     regenerations.value = int((val[64:66] + val[62:64]),16)
+    regeneration_start.value = int(val[3:4])
+    if regeneration_start.value > 0:
+        regeneration_start.value = 1
 
     #Battery capacity #93
     val = response_json["data"][0]["data"][0]["data"]["93"]["data"]
