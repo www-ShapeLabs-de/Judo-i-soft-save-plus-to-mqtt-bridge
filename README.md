@@ -72,12 +72,12 @@ After the successful login, you can copy the hexadecimal-token (just take the "k
 
 The token must then be inserted under TOKEN in the code.
 
-```
-Only ESP:
+
+#### Only ESP:
 The token can be used to create a URL that can also be used to read out the serial number and all other data:
 https://www.myjudo.eu/interface/?token=INSERT_TOKEN_HERE&group=register&command=get%20device%20data
 As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under SERIALNUMBER
-```
+
 
 With this the configuration is finished. The software can now be flashed into the ESP, respectively the script can be executed . Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
 
