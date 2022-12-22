@@ -9,7 +9,7 @@ import config_getjudo
 from paho.mqtt import client as mqtt
 
 class entity():
-    def __init__(self, name, unit, icon, entity_type, value, minimum, maximum):
+    def __init__(self, name, icon, entity_type, unit = "", minimum = 1, maximum = 100, value = 0):
         self.name = name
         self.unit = unit
         self.icon = icon
@@ -46,8 +46,8 @@ class entity():
         elif self.entity_type == "number":
             entity_config["command_topic"] = command_topic
             entity_config["unit_of_measurement"] = self.unit
-            entity_config["min"] = str(self.minimum)
-            entity_config["max"] = str(self.maximum)
+            entity_config["min"] = self.minimum
+            entity_config["max"] = self.maximum
             entity_config["command_template"] = "{\"" + self.name + "\": {{ value }}}"
 
         elif self.entity_type == "switch":
@@ -92,7 +92,7 @@ def on_message(client, userdata, message):
         set_outp_hardness(command_json[output_hardness.name])
     
     elif salt_stock.name in command_json:
-    	set_salt_stock(command_json[salt_stock.name])
+        set_salt_stock(command_json[salt_stock.name])
     
     elif water_lock.name in command_json:
         set_water_lock(command_json[water_lock.name])
@@ -116,11 +116,7 @@ def publish_json(client, topic, message):
 
 
 def set_outp_hardness(hardness):
-    if hardness < 1:
-        hardness = 1
-    elif hardness > 15:
-        hardness = 15
-
+    hardness = clamp(hardness, output_hardness.minimum, output_hardness.maximum)
     hardness_str = "%0.2X" % hardness
     if send_command("60", hardness_str):
         print(f"Output_hardness was successfully set to {str(hardness)}°dH")
@@ -140,13 +136,10 @@ def set_water_lock(pos):
 
 
 def set_salt_stock(mass): #0-50kg
-    if mass > 50:
-        mass = 50
-    elif mass < 0:
-        mass = 0
+    mass = clamp(mass, salt_stock.minimum, salt_stock.maximum)
     mass_str = "%0.4X" % (mass*1000)
     mass_str = mass_str[2:4] + mass_str[0:2]
-    if send_command("94",mass_str):
+    if send_command("94", mass_str):
         print(f"Saltlevel set to {str(mass)}kg successfully")
     else:
         print("HTTP Error while setting the salt level")
@@ -167,6 +160,9 @@ def send_command(index, data):
             return True
     return False
 
+def clamp(n, minn, maxn):
+    return max(min(maxn, n), minn)
+
 	
 #INIT
 command_topic =f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/command"
@@ -176,25 +172,25 @@ client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 
 http = urllib3.PoolManager()
 
-next_revision = entity("Revision in", "Tagen", "mdi:account-wrench", "sensor", 0,0,0)
-total_water = entity("Gesamtwasserverbrauch", "m³","mdi:water", "total_increasing", 0,0,0)
-total_softwater = entity("Gesamtweichwasserverbrauch", "m³","mdi:water-outline", "total_increasing", 0,0,0)
-salt_stock = entity("Salzvorrat", "kg", "mdi:gradient-vertical", "number", 0, 1, 50)
-salt_range = entity("Salzreichweite", "Tage", "mdi:chevron-triple-right", "sensor", 0,0,0)
-output_hardness = entity("Wunschwasserhaerte", "°dH", "mdi:water-minus", "number", 0, 1, 15)
-input_hardness = entity("Rohwasserhaerte", "°dH", "mdi:water-plus", "sensor", 0,0,0)
-water_flow = entity("Wasserdurchflussmenge", "L/h", "mdi:waves-arrow-right", "sensor", 0,0,0)
-batt_capacity = entity("Batterierestkapazitaet", "%", "mdi:battery-50", "sensor", 0,0,0)
-regenerations = entity("Anzahl_Regenerationen", " ", "mdi:recycle-variant", "sensor", 0,0,0)
-water_lock = entity("Leckageschutz", " ", "mdi:pipe-valve", "switch", 0,0,0)
-regeneration_start = entity("Regeneration", " ", "mdi:recycle-variant", "switch", 0 ,0, 0)
-#= entity_type("", "", "", "", 0 ,0, 0) #Name, Unit, Icon, Type, Initial Value, Min, Max 
+next_revision = entity("Revision in", "mdi:account-wrench", "sensor", "Tagen")
+total_water = entity("Gesamtwasserverbrauch", "mdi:water", "total_increasing", "m³")
+total_softwater = entity("Gesamtweichwasserverbrauch", "mdi:water-outline", "total_increasing", "m³")
+salt_stock = entity("Salzvorrat", "mdi:gradient-vertical", "number", "kg", 1, 50)
+salt_range = entity("Salzreichweite", "mdi:chevron-triple-right", "sensor", "Tage")
+output_hardness = entity("Wunschwasserhaerte", "mdi:water-minus", "number", "°dH", 1, 15)
+input_hardness = entity("Rohwasserhaerte", "mdi:water-plus", "sensor", "°dH")
+water_flow = entity("Wasserdurchflussmenge", "mdi:waves-arrow-right", "sensor", "L/h")
+batt_capacity = entity("Batterierestkapazitaet", "mdi:battery-50", "sensor", "%")
+regenerations = entity("Anzahl_Regenerationen", "mdi:recycle-variant", "sensor")
+water_lock = entity("Leckageschutz", "mdi:pipe-valve", "switch")
+regeneration_start = entity("Regeneration", "mdi:recycle-variant", "switch")
 
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 if config_getjudo.USE_MQTT_AUTH:
     client.username_pw_set(config_getjudo.MQTTUSER, config_getjudo.MQTTPASSWD)
+client.will_set(availability_topic, config_getjudo.AVAILABILITY_OFFLINE, qos=0, retain=True)
 client.connect(config_getjudo.BROKER, config_getjudo.PORT, 60)
 client.loop_start()
 
@@ -208,7 +204,6 @@ while True:
     my_serial = response_json["data"][0]["serialnumber"]
     my_da = response_json["data"][0]["data"][0]["da"]
     my_dt = response_json["data"][0]["data"][0]["dt"]
-
 
     #Next revision in days #7
     val = response_json["data"][0]["data"][0]["data"]["7"]["data"]
