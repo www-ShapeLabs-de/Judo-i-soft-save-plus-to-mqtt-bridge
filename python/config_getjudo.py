@@ -19,7 +19,7 @@ MANUFACTURER = "ShapeLabs.de"                   #CC BY-NC-SA 4.0
 SW_VERSION = "1.3"
 STATE_UPDATE_INTERVAL = 20                      #Update interval in seconds
 AVAILABILITY_ONLINE = "online"
-
+AVAILABILITY_OFFLINE = "offline"
 
 
 
