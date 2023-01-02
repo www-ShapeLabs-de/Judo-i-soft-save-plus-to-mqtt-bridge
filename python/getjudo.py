@@ -73,7 +73,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(command_topic)
         print("Topics has been subscribed...")
         
-        client.publish(availability_topic, config_getjudo.AVAILABILITY_ONLINE)
+        client.publish(availability_topic, config_getjudo.AVAILABILITY_ONLINE, qos=0, retain=True)
 
         for obj in gc.get_objects():
             if isinstance(obj, entity):
@@ -172,7 +172,7 @@ client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 
 http = urllib3.PoolManager()
 
-next_revision = entity("Revision in", "mdi:account-wrench", "sensor", "Tagen")
+next_revision = entity("Revision_in", "mdi:account-wrench", "sensor", "Tagen")
 total_water = entity("Gesamtwasserverbrauch", "mdi:water", "total_increasing", "m³")
 total_softwater = entity("Gesamtweichwasserverbrauch", "mdi:water-outline", "total_increasing", "m³")
 salt_stock = entity("Salzvorrat", "mdi:gradient-vertical", "number", "kg", 1, 50)
