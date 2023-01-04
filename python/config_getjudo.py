@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #Judo Config
-TOKEN = "1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d"      #Just take the knmtoken from URL
+JUDO_USER = "myjudousername"
+JUDO_PASSWORD = "myjudopassword"
 
 #MQTT Config
 BROKER = "192.168.1.2"                          #Broker IP
