@@ -23,14 +23,13 @@ The hardware of this project consists of an ESP8266 in basic circuitry. You can 
 
 ### Second Version: python
 
-This is a small script which can be executed on any platform. It only needs to be configured via config_getjudo.py.
+This is a small script which can be executed on any platform. In config_getjudo.py you only have to enter your access data for your myjudo.eu account and the settings for your mqtt broker. 
 
 It may still be necessary to install the paho-mqtt package:
 ```
 $sudo pip install paho-mqtt
 ```
-
-On Linux platforms it is best to include it in the systemd-manager:
+After that you can start the script. On Linux platforms it is best to include it in the systemd-manager:
 
 Copy/Clone the getjudo.py and the config_getjudo.py to your home-folder or wherever you want. Then create a new systemd-service:
 ```
@@ -66,20 +65,18 @@ Start the service:
 $sudo systemctl start getjudo.service
 ```
 
-### Config (both versions)
-In both versions, it is necessary to generate a token. To do this, log into the cloud service with your user account on https://www.myjudo.eu.
+### Config (ESP8266)
+It is necessary to generate a token. To do this, log into the cloud service with your user account on https://www.myjudo.eu.
 After the successful login, you can copy the hexadecimal-token (just take the "knmtoken" not the "judotoken") from the URL in the address bar of the browser.
-
 The token must then be inserted under TOKEN in the code.
-
-
-#### Only ESP:
 The token can be used to create a URL that can also be used to read out the serial number and all other data:
 https://www.myjudo.eu/interface/?token=INSERT_TOKEN_HERE&group=register&command=get%20device%20data
-As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under SERIALNUMBER
+As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under SERIALNUMBER. The software can now be flashed into the ESP
 
 
-With this the configuration is finished. The software can now be flashed into the ESP, respectively the script can be executed . Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
+
+### Startup
+Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
 
 ![HASSIO autoconfig of this device](hassio_device_autconfig.png)
 
