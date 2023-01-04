@@ -280,7 +280,7 @@ while True:
             for obj in gc.get_objects():
                 if isinstance(obj, entity):
                     outp_val_dict[obj.name] = str(obj.value)
-            #publish_json(client, state_topic, outp_val_dict)
+            publish_json(client, state_topic, outp_val_dict)
 
         elif response_json["status"] == "error":
             if response_json["data"] == "login failed":
