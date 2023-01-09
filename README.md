@@ -94,7 +94,8 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - leakage protection (switch)
   - output hardness (input number slider)
   - salt stock (input number slider)
-  - triggering regeneration
+  - triggering regeneration (switch)
+  - sleepmode (input number slider) (start sleepmode by setting hours) 
 
 
 
