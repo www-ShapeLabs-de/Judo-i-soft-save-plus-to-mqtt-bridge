@@ -99,9 +99,11 @@ def on_message(client, userdata, message):
     elif water_lock.name in command_json:
         set_water_lock(command_json[water_lock.name])
     
-    elif start_regeneration.name in command_json:
-        set_water_lock(command_json[start_regeneration.name])
+    elif regeneration_start.name in command_json:
+        set_water_lock(command_json[regeneration_start.name])
 
+    elif sleepmode.name in command_json:
+        set_sleepmode(command_json[sleepmode.name])
     else:
         print("Command_Name_Error!!")
 
@@ -135,6 +137,27 @@ def set_water_lock(pos):
             print("HTTP Error while setting the leackage protection")
     else:
         print("Command_Error!!")
+
+
+def set_sleepmode(hours):
+    hours = clamp(hours,sleepmode.minimum,sleepmode.maximum)
+    if hours == 0:
+        if send_command("73", ""):
+            print("Sleepmode has been successfully disabled, Leakage protection is active now")
+        else:
+            print("HTTP Error while disabling the sleepmode")
+    else:
+        if send_command("171", str(hours)):
+            print(f"Sleepmodetime was set to {hours}h successfully")
+        else:
+            print("HTTP Error while setting up the sleepmode-time")
+
+        time.sleep(2)
+
+        if send_command("171", ""):
+            print("Sleepmode has been successfully enabled, Leakage protection is disabled now")
+        else:
+            print("HTTP Error while enabling the sleepmode")
 
 
 def set_salt_stock(mass): #0-50kg
@@ -204,8 +227,9 @@ input_hardness = entity("Rohwasserhaerte", "mdi:water-plus", "sensor", "°dH")
 water_flow = entity("Wasserdurchflussmenge", "mdi:waves-arrow-right", "sensor", "L/h")
 batt_capacity = entity("Batterierestkapazitaet", "mdi:battery-50", "sensor", "%")
 regenerations = entity("Anzahl_Regenerationen", "mdi:recycle-variant", "sensor")
-water_lock = entity("Leckageschutz", "mdi:pipe-valve", "switch")
+water_lock = entity("Wasser_absperren", "mdi:pipe-valve", "switch")
 regeneration_start = entity("Regeneration", "mdi:recycle-variant", "switch")
+sleepmode = entity("Sleepmode", "mdi:pause-octagon", "number", "h", 0, 10)
 
 
 client = mqtt.Client()
@@ -272,6 +296,7 @@ while True:
             water_lock.value = int(val[2:4],16)
             if water_lock.value > 1:
                 water_lock.value = 1
+            sleepmode.value = int(val[20:22],16)
 
             print("Publishing parsed values over MQTT....")
             client.publish(availability_topic, config_getjudo.AVAILABILITY_ONLINE, qos=0, retain=True)
