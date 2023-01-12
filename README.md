@@ -78,7 +78,7 @@ As a response you get the complete data set, which also contains the serial numb
 ### Startup
 Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
 
-![HASSIO autoconfig of this device](hassio_device_autconfig.png)
+![HASSIO autoconfig of this device](hassio_device_autconfig2.png)
 
 - reading (sensors): 
   - next revision
