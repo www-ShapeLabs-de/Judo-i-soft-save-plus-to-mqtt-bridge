@@ -96,6 +96,9 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - salt stock (input number slider)
   - triggering regeneration (switch)
   - sleepmode (input number slider) (start sleepmode by setting hours) 
+  - max. extraction time, leakage protection config (slider)
+  - max. extraction quantity, leakage protection config (slider)
+  - max. waterflow, leakage protection config (slider
 
 
 
