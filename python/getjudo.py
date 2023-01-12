@@ -11,7 +11,7 @@ import sys
 from paho.mqtt import client as mqtt
 
 class entity():
-    def __init__(self, name, icon, entity_type, unit = "", minimum = 1, maximum = 100, value = 0):
+    def __init__(self, name, icon, entity_type, unit = "", minimum = 1, maximum = 100, step = 1, value = 0):
         self.name = name
         self.unit = unit
         self.icon = icon
@@ -19,6 +19,7 @@ class entity():
         self.value = value
         self.minimum = minimum
         self.maximum = maximum
+        self.step = step
 
     def send_entity_autoconfig(self):
         device_config = {
@@ -50,6 +51,7 @@ class entity():
             entity_config["unit_of_measurement"] = self.unit
             entity_config["min"] = self.minimum
             entity_config["max"] = self.maximum
+            entity_config["step"] = self.step
             entity_config["command_template"] = "{\"" + self.name + "\": {{ value }}}"
 
         elif self.entity_type == "switch":
@@ -91,19 +93,29 @@ def on_message(client, userdata, message):
     command_json = json.loads(message.payload)
     
     if output_hardness.name in command_json:
-        set_outp_hardness(command_json[output_hardness.name])
-    
+        set_value(output_hardness, 60, command_json[output_hardness.name], 8)
+
     elif salt_stock.name in command_json:
-        set_salt_stock(command_json[salt_stock.name])
+        set_value(salt_stock, 94,command_json[salt_stock.name]*1000, 16)
     
     elif water_lock.name in command_json:
         set_water_lock(command_json[water_lock.name])
-    
+
     elif regeneration_start.name in command_json:
-        set_water_lock(command_json[regeneration_start.name])
+        start_regeneration()
 
     elif sleepmode.name in command_json:
         set_sleepmode(command_json[sleepmode.name])
+
+    elif max_waterflow.name in command_json:
+        set_value(max_waterflow, 75, command_json[max_waterflow.name], 16)
+
+    elif extraction_time.name in command_json:
+        set_value(extraction_time, 74, command_json[extraction_time.name], 16)
+
+    elif extraction_quantity.name in command_json:
+        set_value(extraction_quantity, 76, command_json[extraction_quantity.name], 16)
+
     else:
         print("Command_Name_Error!!")
 
@@ -117,15 +129,6 @@ def publish_json(client, topic, message):
             print(f"Send `{json_message}` to topic `{topic}`")
         else:
             print(f"Failed to send message to topic {topic}")
-
-
-def set_outp_hardness(hardness):
-    hardness = clamp(hardness, output_hardness.minimum, output_hardness.maximum)
-    hardness_str = "%0.2X" % hardness
-    if send_command("60", hardness_str):
-        print(f"Output_hardness was successfully set to {str(hardness)}°dH")
-    else:
-        print("HTTP Error while setting the output_hardness")
 
 
 def set_water_lock(pos):
@@ -160,21 +163,18 @@ def set_sleepmode(hours):
             print("HTTP Error while enabling the sleepmode")
 
 
-def set_salt_stock(mass): #0-50kg
-    mass = clamp(mass, salt_stock.minimum, salt_stock.maximum)
-    mass_str = "%0.4X" % (mass*1000)
-    mass_str = mass_str[2:4] + mass_str[0:2]
-    if send_command("94", mass_str):
-        print(f"Saltlevel set to {str(mass)}kg successfully")
-    else:
-        print("HTTP Error while setting the salt level")
-
-
 def start_regeneration():
     if send_command("65", ""):
         print("Regeneration has been started successfully")
     else:
         print("HTTP Error while setting the regeneration-trigger")
+
+
+def set_value(obj, index, value, length):
+    if send_command(str(index), int_to_le_hex(value, length)):
+        print(f"{obj.name} has been set to {value} successfully")
+    else:
+        print(f"HTTP Error while setting {obj.name}")
 
 
 def send_command(index, data):
@@ -186,14 +186,18 @@ def send_command(index, data):
     return False
 
 
-def clamp(n, minn, maxn):
-    return max(min(maxn, n), minn)
-
-
 def le_hex_to_int(hexstring):
     # convert little endian hex to integer
     return int.from_bytes(bytes.fromhex(hexstring), byteorder='little')
 
+def int_to_le_hex(integer,length):
+    if length == 16:
+        tmp = "%0.4X" % integer
+        return (tmp[2:4] + tmp[0:2])
+    elif length == 8:
+        return ("%0.2X" % integer)
+    else:
+        sys.exit("failed by int to hex conversion")
 
 def judo_login(username, password):
     pwmd5 = hashlib.md5(password.encode("utf-8")).hexdigest()
@@ -230,6 +234,13 @@ regenerations = entity("Anzahl_Regenerationen", "mdi:recycle-variant", "sensor")
 water_lock = entity("Wasser_absperren", "mdi:pipe-valve", "switch")
 regeneration_start = entity("Regeneration", "mdi:recycle-variant", "switch")
 sleepmode = entity("Sleepmode", "mdi:pause-octagon", "number", "h", 0, 10)
+
+#The maximum possible values for these settings have not been configured here. 
+#For a better handling of the sliders I have limited the values. 
+#If I need higher values I use the sleepmode to deactivate the leakage protection.
+extraction_time = entity("max_Entnahmedauer", "mdi:clock-alert-outline", "number", "min", 10, 60, 10) #can setup to max 600min 
+max_waterflow = entity("max_Wasserdurchfluss", "mdi:waves-arrow-up", "number", "L/h", 500, 2000, 500) #can setup to max 5000L/h 
+extraction_quantity = entity("max_Entnahmemenge", "mdi:cup-water", "number", "L", 100, 500, 100)      #can setup to max 3000L
 
 
 client = mqtt.Client()
@@ -277,7 +288,7 @@ while True:
             val =response_json["data"][0]["data"][0]["data"]["790"]["data"] 
             output_hardness.value = int(val[18:20],16)
             input_hardness.value = int(val[54:56],16)
-            input_hardness.value = float(input_hardness.value)/2 + 2
+            input_hardness.value = float(input_hardness.value)/2 + 2            #ISSUE: Is this formular correct?
             water_flow.value = le_hex_to_int(val[34:38])
 
             #Regnerations #791
@@ -296,7 +307,10 @@ while True:
             water_lock.value = int(val[2:4],16)
             if water_lock.value > 1:
                 water_lock.value = 1
-            sleepmode.value = int(val[20:22],16)
+            sleepmode.value = int(val[20:22], 16)
+            max_waterflow.value = le_hex_to_int(val[26:30])
+            extraction_quantity.value = le_hex_to_int(val[30:34])
+            extraction_time.value = le_hex_to_int(val[34:38])
 
             print("Publishing parsed values over MQTT....")
             client.publish(availability_topic, config_getjudo.AVAILABILITY_ONLINE, qos=0, retain=True)
