@@ -122,7 +122,8 @@ def on_message(client, userdata, message):
 
 def publish_json(client, topic, message):
     json_message = json.dumps(message)
-    result = client.publish(topic, json_message)
+    result = client.publish(topic, json_message, qos=0, retain=True)
+	
     if __debug__:
         status = result[0]
         if status == 0:
