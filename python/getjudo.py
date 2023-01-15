@@ -9,6 +9,7 @@ import config_getjudo
 import hashlib
 import sys
 from paho.mqtt import client as mqtt
+from datetime import date, timedelta
 
 class entity():
     def __init__(self, name, icon, entity_type, unit = "", minimum = 1, maximum = 100, step = 1, value = 0):
@@ -33,6 +34,8 @@ class entity():
         entity_config = {
             "device": device_config,
             "availability_topic": availability_topic,
+            "payload_available": config_getjudo.AVAILABILITY_ONLINE,
+            "payload_not_available": config_getjudo.AVAILABILITY_OFFLINE,
             "state_topic": state_topic,
             "name": client_id + " " + self.name,
             "unique_id": client_id + "_" + self.name,
@@ -123,7 +126,6 @@ def on_message(client, userdata, message):
 def publish_json(client, topic, message):
     json_message = json.dumps(message)
     result = client.publish(topic, json_message, qos=0, retain=True)
-	
     if __debug__:
         status = result[0]
         if status == 0:
@@ -187,6 +189,22 @@ def send_command(index, data):
     return False
 
 
+def get_water_daily(day): #0=today, 1=yesterday, 2=day before yesterday.......
+    if day == 0:
+        today = date.today()
+    else:
+        today = date.today() - timedelta(days=day)
+    datestring = str(today.day) + "%02d" %today.month + str(today.year)
+    chart_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={my_token}&group=register&command=get_chart_data&serialnumber={my_serial}&date={datestring}&parameter=day")
+    chart_response_json = json.loads(chart_response.data)
+    if "data" in chart_response_json:
+        val = chart_response_json["data"]
+        daily_water = int(val[0:8],16) + int(val[8:16],16) + int(val[16:24],16) + int(val[24:32],16) + int(val[32:40],16) + int(val[40:48],16) + int(val[48:56],16) + int(val[56:64],16)
+        return daily_water
+    else:
+        sys.exit("Error while getting chart data")
+
+
 def le_hex_to_int(hexstring):
     # convert little endian hex to integer
     return int.from_bytes(bytes.fromhex(hexstring), byteorder='little')
@@ -235,6 +253,8 @@ regenerations = entity("Anzahl_Regenerationen", "mdi:recycle-variant", "sensor")
 water_lock = entity("Wasser_absperren", "mdi:pipe-valve", "switch")
 regeneration_start = entity("Regeneration", "mdi:recycle-variant", "switch")
 sleepmode = entity("Sleepmode", "mdi:pause-octagon", "number", "h", 0, 10)
+water_today = entity("Verbrauch_Heute", "mdi:chart-box", "sensor", "L")
+water_yesterday = entity("Verbrauch_Gestern", "mdi:chart-box-outline", "sensor", "L")
 
 #The maximum possible values for these settings have not been configured here. 
 #For a better handling of the sliders I have limited the values. 
@@ -242,6 +262,7 @@ sleepmode = entity("Sleepmode", "mdi:pause-octagon", "number", "h", 0, 10)
 extraction_time = entity("max_Entnahmedauer", "mdi:clock-alert-outline", "number", "min", 10, 60, 10) #can setup to max 600min 
 max_waterflow = entity("max_Wasserdurchfluss", "mdi:waves-arrow-up", "number", "L/h", 500, 2000, 500) #can setup to max 5000L/h 
 extraction_quantity = entity("max_Entnahmemenge", "mdi:cup-water", "number", "L", 100, 500, 100)      #can setup to max 3000L
+
 
 
 client = mqtt.Client()
@@ -257,9 +278,10 @@ client.loop_start()
 #MAIN LOOP
 while True:
     print("Sending GET to Cloud-Service...")
+
     response = http.request('GET',f"https://www.myjudo.eu/interface/?token={my_token}&group=register&command=get%20device%20data")
     response_json = json.loads(response.data)
-    
+
     if "status" in response_json:
         if response_json["status"] ==  "ok":
             print("Parsing values from response...")
@@ -313,9 +335,10 @@ while True:
             extraction_quantity.value = le_hex_to_int(val[30:34])
             extraction_time.value = le_hex_to_int(val[34:38])
 
-            print("Publishing parsed values over MQTT....")
-            client.publish(availability_topic, config_getjudo.AVAILABILITY_ONLINE, qos=0, retain=True)
+            water_today.value = get_water_daily(0)
+            water_yesterday.value = get_water_daily(1)
 
+            print("Publishing parsed values over MQTT....")
             outp_val_dict = {}
             for obj in gc.get_objects():
                 if isinstance(obj, entity):
@@ -334,6 +357,9 @@ while True:
     else:
         sys.exit("Error: Invalid response")
 
+
+
     print("Spend some time....")
+
     time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
 
