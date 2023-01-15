@@ -90,6 +90,8 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - water flow
   - capacity of battery
   - number of regenerations
+  - daily consumption (today)
+  - daily consumption (yesterday)
 - writing:
   - leakage protection (switch)
   - output hardness (input number slider)
