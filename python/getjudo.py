@@ -253,8 +253,8 @@ regenerations = entity("Anzahl_Regenerationen", "mdi:recycle-variant", "sensor")
 water_lock = entity("Wasser_absperren", "mdi:pipe-valve", "switch")
 regeneration_start = entity("Regeneration", "mdi:recycle-variant", "switch")
 sleepmode = entity("Sleepmode", "mdi:pause-octagon", "number", "h", 0, 10)
-water_today = entity("Verbrauch_Heute", "mdi:chart-box", "sensor", "L")
-water_yesterday = entity("Verbrauch_Gestern", "mdi:chart-box-outline", "sensor", "L")
+#water_today = entity("Verbrauch_Heute", "mdi:chart-box", "sensor", "L")
+#water_yesterday = entity("Verbrauch_Gestern", "mdi:chart-box-outline", "sensor", "L")
 
 #The maximum possible values for these settings have not been configured here. 
 #For a better handling of the sliders I have limited the values. 
@@ -335,8 +335,8 @@ while True:
             extraction_quantity.value = le_hex_to_int(val[30:34])
             extraction_time.value = le_hex_to_int(val[34:38])
 
-            water_today.value = get_water_daily(0)
-            water_yesterday.value = get_water_daily(1)
+            #water_today.value = get_water_daily(0)
+            #water_yesterday.value = get_water_daily(1)
 
             print("Publishing parsed values over MQTT....")
             outp_val_dict = {}
