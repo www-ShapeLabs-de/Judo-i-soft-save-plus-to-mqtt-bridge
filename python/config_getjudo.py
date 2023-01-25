@@ -22,5 +22,7 @@ STATE_UPDATE_INTERVAL = 20                      #Update interval in seconds
 AVAILABILITY_ONLINE = "online"
 AVAILABILITY_OFFLINE = "offline"
 
+#Error- and warning messages of plant published to notification topic ( LOCATION/NAME/notify )
+MESSAGE_LANGUAGE = "DE"							# "DE" / "ENG"
 
 
