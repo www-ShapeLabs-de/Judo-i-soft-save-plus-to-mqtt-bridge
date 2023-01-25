@@ -84,6 +84,7 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - next revision
   - total water consumption
   - total softwater consumption
+  - total hardwater consumption
   - salt range
   - output hardness
   - input hardness
@@ -101,6 +102,8 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - max. extraction time, leakage protection config (input number slider)
   - max. extraction quantity, leakage protection config (input number slider)
   - max. waterflow, leakage protection config (input number slider)
+- other:
+  - Error- and warning messages of plant published to notification topic (LOCATION/NAME/notify). Can be used for hassio telegram bot…
 
 
 
