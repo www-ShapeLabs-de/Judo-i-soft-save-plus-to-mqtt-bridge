@@ -22,7 +22,9 @@ STATE_UPDATE_INTERVAL = 20                      #Update interval in seconds
 AVAILABILITY_ONLINE = "online"
 AVAILABILITY_OFFLINE = "offline"
 
-#Error- and warning messages of plant published to notification topic ( LOCATION/NAME/notify )
-MESSAGE_LANGUAGE = "DE"							# "DE" / "ENG"
+#Error- and warning messages of plant published to notification topic ( LOCATION/NAME/notify ). Can be used for hassio telegram bot..
+LANGUAGE = "DE"									# "DE" / "ENG"
+MQTT_DEBUG_LEVEL = 3							# 0=0ff, 1=Judo-Warnings/Errors, 2=Command feedback  3=Script Errors, Exceptions
+MAX_RETRIES = 3
 
 
