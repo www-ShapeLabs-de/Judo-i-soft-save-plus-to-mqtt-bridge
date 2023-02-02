@@ -13,7 +13,6 @@ from datetime import date
 import pickle
 
 
-
 class entity():
     def __init__(self, name, icon, entity_type, unit = "", minimum = 1, maximum = 100, step = 1, value = 0):
         self.name = name
@@ -71,31 +70,73 @@ class entity():
             entity_config["unit_of_measurement"] = self.unit
 
         else:
-            print ("autoconf ERROR!!")
+            print(messages_getjudo.debug[26])
 
         autoconf_topic = f"homeassistant/{self.entity_type}/{config_getjudo.LOCATION}/{config_getjudo.NAME}_{self.name}/config"
         publish_json(client, autoconf_topic, entity_config)
 
+    def parse(self, response, index, a,b):
+        val = response["data"][0]["data"][0]["data"][str(index)]["data"]
+        if val != "":
+            self.value = int.from_bytes(bytes.fromhex(val[a:b]), byteorder='little')
+
+
+class notification_entity():
+    def __init__(self, name, icon, counter=0, value = ""):
+        self.name = name
+        self.icon = icon
+        self.value = value
+        self.counter = counter
+
+    def send_autoconfig(self):
+        device_config = {
+            "identifiers": f"[{client_id}]",
+            "manufacturer": config_getjudo.MANUFACTURER,
+            "model": config_getjudo.NAME,
+            "name": client_id,
+            "sw_version": config_getjudo.SW_VERSION
+        }
+        entity_config = {
+            "device": device_config,
+            "availability_topic": availability_topic,
+            "payload_available": config_getjudo.AVAILABILITY_ONLINE,
+            "payload_not_available": config_getjudo.AVAILABILITY_OFFLINE,
+            "state_topic": notification_topic,
+            "name": client_id + " " + self.name,
+            "unique_id": client_id + "_" + self.name,
+            "icon": self.icon
+        }
+        autoconf_topic = f"homeassistant/sensor/{config_getjudo.LOCATION}/{config_getjudo.NAME}_{self.name}/config"
+        publish_json(client, autoconf_topic, entity_config)
+
+    def publish(self, message, debuglevel):
+        self.value = message
+        msg = str(self.value)
+        print(msg)
+        if config_getjudo.MQTT_DEBUG_LEVEL  >= debuglevel:
+            client.publish(notification_topic, msg, qos=0, retain=True)
+
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
-        print("Connected to MQTT Broker...")
+        print(messages_getjudo.debug[1])
         client.subscribe(command_topic)
-        print("Topics has been subscribed...")
+        print(messages_getjudo.debug[2])
         
         client.publish(availability_topic, config_getjudo.AVAILABILITY_ONLINE, qos=0, retain=True)
 
         for obj in gc.get_objects():
             if isinstance(obj, entity):
                 obj.send_entity_autoconfig()
-        print("Autoconfigs has been sent...")
+        notify.send_autoconfig()
+        print(messages_getjudo.debug[3])
     else:
-        print("Failed to connect, return code %d\n", rc)
+        print(messages_getjudo.debug[4].format(rc))
 
 
 #Callback
 def on_message(client, userdata, message):
-    print(f"Incomming Message: {message.topic}{message.payload}")
+    print(messages_getjudo.debug[5].format(message.topic, message.payload))
     command_json = json.loads(message.payload)
     
     if output_hardness.name in command_json:
@@ -123,94 +164,57 @@ def on_message(client, userdata, message):
         set_value(extraction_quantity, 76, command_json[extraction_quantity.name], 16)
 
     else:
-        print("Command_Name_Error!!")
+        print(messages_getjudo.debug[6])
 
 
 def publish_json(client, topic, message):
     json_message = json.dumps(message)
     result = client.publish(topic, json_message, qos=0, retain=True)
-    if __debug__:
-        status = result[0]
-        if status == 0:
-            print(f"Send `{json_message}` to topic `{topic}`")
-        else:
-            print(f"Failed to send message to topic {topic}")
 
 
 def set_water_lock(pos):
     if pos < 2:
         pos_index = str(73 - pos)
         if send_command(pos_index, ""):
-            print(f"Leackage protection has been switched {pos} successfully ")
-        else:
-            print("HTTP Error while setting the leackage protection")
+            notify.publish(messages_getjudo.debug[7].format(pos), 2)
     else:
-        print("Command_Error!!")
+        print(messages_getjudo.debug[9])
 
 
 def set_sleepmode(hours):
     if hours == 0:
         if send_command("73", ""):
-            print("Sleepmode has been successfully disabled, Leakage protection is active now")
-        else:
-            print("HTTP Error while disabling the sleepmode")
+            notify.publish(messages_getjudo.debug[10], 2)
     else:
         if send_command("171", str(hours)):
-            print(f"Sleepmodetime was set to {hours}h successfully")
-        else:
-            print("HTTP Error while setting up the sleepmode-time")
-
+            notify.publish(messages_getjudo.debug[12].format(hours), 2)
         time.sleep(2)
-
         if send_command("171", ""):
-            print("Sleepmode has been successfully enabled, Leakage protection is disabled now")
-        else:
-            print("HTTP Error while enabling the sleepmode")
+            notify.publish(messages_getjudo.debug[14], 2)
 
 
 def start_regeneration():
     if send_command("65", ""):
-        print("Regeneration has been started successfully")
-    else:
-        print("HTTP Error while setting the regeneration-trigger")
+        notify.publish(messages_getjudo.debug[16], 2)
 
 
 def set_value(obj, index, value, length):
     if send_command(str(index), int_to_le_hex(value, length)):
-        print(f"{obj.name} has been set to {value} successfully")
-    else:
-        print(f"HTTP Error while setting {obj.name}")
+        notify.publish(messages_getjudo.debug[18].format(obj.name, value), 2)
 
 
 def send_command(index, data):
-    cmd_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={my_token}&group=register&command=write%20data&serial_number={my_serial}&dt={my_dt}&index={index}&data={data}&da={my_da}&role=customer")
-    cmd_response_json = json.loads(cmd_response.data)
-    if "status" in cmd_response_json:
-        if cmd_response_json["status"] == "ok":
-            return True
+    try:
+        cmd_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={my_token}&group=register&command=write%20data&serial_number={my_serial}&dt={my_dt}&index={index}&data={data}&da={my_da}&role=customer")
+        cmd_response_json = json.loads(cmd_response.data)
+        if "status" in cmd_response_json:
+            if cmd_response_json["status"] == "ok":
+                return True
+    except Exception as e:
+        notify.publish([messages_getjudo.debug[27].format(sys.exc_info()[-1].tb_lineno),e], 3)
+        return False
     return False
 
-"""
-#Doesnt works correctly, it seems to be get banned by judo-server after some requests. Shit happens... So what, we have a workaround!
-def get_water_daily(day): #0=today, 1=yesterday, 2=day before yesterday.......
-    if day == 0:
-        today = date.today()
-    else:
-        today = date.today() - timedelta(days=day)
-    datestring = str(today.day) + "%02d" %today.month + str(today.year)
-    chart_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={my_token}&group=register&command=get_chart_data&serialnumber={my_serial}&date={datestring}&parameter=day")
-    chart_response_json = json.loads(chart_response.data)
-    if "data" in chart_response_json:
-        val = chart_response_json["data"]
-        daily_water = int(val[0:8],16) + int(val[8:16],16) + int(val[16:24],16) + int(val[24:32],16) + int(val[32:40],16) + int(val[40:48],16) + int(val[48:56],16) + int(val[56:64],16)
-        return daily_water
-    else:
-        sys.exit("Error while getting chart data")
-"""
-
-def le_hex_to_int(hexstring):
-    # convert little endian hex to integer
-    return int.from_bytes(bytes.fromhex(hexstring), byteorder='little')
 
 def int_to_le_hex(integer,length):
     if length == 16:
@@ -219,57 +223,60 @@ def int_to_le_hex(integer,length):
     elif length == 8:
         return ("%0.2X" % integer)
     else:
-        sys.exit("failed by int to hex conversion")
+        notify.publish(messages_getjudo.debug[20], 3)
+
 
 def judo_login(username, password):
     pwmd5 = hashlib.md5(password.encode("utf-8")).hexdigest()
-    login_response = http.request('GET', f"https://www.myjudo.eu/interface/?group=register&command=login&name=login&user={username}&password={pwmd5}&nohash=Service&role=customer")
-    login_response_json = json.loads(login_response.data)
- 
-    if "token" in login_response_json:
-        print(f"Login successfull, got new token: {login_response_json['token']}")
-        return login_response_json['token']
-    else:
-        sys.exit("Login to myjudo.eu failed.")
-
-try:
-    #----- MAIN PROGRAM ----
-    command_topic =f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/command"
-    state_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/state"
-    availability_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/status"
-    notification_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/notify"
-    client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
-
-    http = urllib3.PoolManager()
-
-    my_token = judo_login(config_getjudo.JUDO_USER, config_getjudo.JUDO_PASSWORD)
-
-    next_revision = entity("Revision_in", "mdi:account-wrench", "sensor", "Tagen")
-    total_water = entity("Gesamtwasserverbrauch", "mdi:water-circle", "total_increasing", "m³")
-    total_softwater_proportion = entity("Gesamtweichwasseranteil", "mdi:water-outline", "total_increasing", "m³")
-    total_hardwater_proportion = entity("Gesamthartwasseranteil", "mdi:water", "total_increasing", "m³")
-    salt_stock = entity("Salzvorrat", "mdi:gradient-vertical", "number", "kg", 1, 50)
-    salt_range = entity("Salzreichweite", "mdi:chevron-triple-right", "sensor", "Tage")
-    output_hardness = entity("Wunschwasserhaerte", "mdi:water-minus", "number", "°dH", 1, 15)
-    input_hardness = entity("Rohwasserhaerte", "mdi:water-plus", "sensor", "°dH")
-    water_flow = entity("Wasserdurchflussmenge", "mdi:waves-arrow-right", "sensor", "L/h")
-    batt_capacity = entity("Batterierestkapazitaet", "mdi:battery-50", "sensor", "%")
-    regenerations = entity("Anzahl_Regenerationen", "mdi:recycle-variant", "sensor")
-    water_lock = entity("Wasser_absperren", "mdi:pipe-valve", "switch")
-    regeneration_start = entity("Regeneration", "mdi:recycle-variant", "switch")
-    sleepmode = entity("Sleepmode", "mdi:pause-octagon", "number", "h", 0, 10)
-    water_today = entity("Verbrauch_Heute", "mdi:chart-box", "sensor", "L")
-    water_yesterday = entity("Verbrauch_Gestern", "mdi:chart-box-outline", "sensor", "L")
-
-    #The maximum possible values for these settings have not been configured here. 
-    #For a better handling of the sliders I have limited the values. 
-    #If I need higher values I use the sleepmode to deactivate the leakage protection.
-    extraction_time = entity("max_Entnahmedauer", "mdi:clock-alert-outline", "number", "min", 10, 60, 10) #can setup to max 600min 
-    max_waterflow = entity("max_Wasserdurchfluss", "mdi:waves-arrow-up", "number", "L/h", 500, 3000, 500) #can setup to max 5000L/h 
-    extraction_quantity = entity("max_Entnahmemenge", "mdi:cup-water", "number", "L", 100, 500, 100)      #can setup to max 3000L
+    try:
+        login_response = http.request('GET', f"https://www.myjudo.eu/interface/?group=register&command=login&name=login&user={username}&password={pwmd5}&nohash=Service&role=customer")
+        login_response_json = json.loads(login_response.data)
+        if "token" in login_response_json:
+            print(messages_getjudo.debug[22].format(login_response_json['token']))
+            return login_response_json['token']
+        else:
+            notify.publish(messages_getjudo.debug[21], 2)
+            return False 
+    except Exception as e:
+        notify.publish([messages_getjudo.debug[28].format(sys.exc_info()[-1].tb_lineno),e], 3)
+        return False
 
 
+#----- MAIN PROGRAM ----
+command_topic =f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/command"
+state_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/state"
+availability_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/status"
+notification_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/notify"
+client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 
+http = urllib3.PoolManager()
+
+next_revision = entity(messages_getjudo.entities[0], "mdi:account-wrench", "sensor", "Tagen")
+total_water = entity(messages_getjudo.entities[1], "mdi:water-circle", "total_increasing", "m³")
+total_softwater_proportion = entity(messages_getjudo.entities[2], "mdi:water-outline", "total_increasing", "m³")
+total_hardwater_proportion = entity(messages_getjudo.entities[3], "mdi:water", "total_increasing", "m³")
+salt_stock = entity(messages_getjudo.entities[4], "mdi:gradient-vertical", "number", "kg", 1, 50)
+salt_range = entity(messages_getjudo.entities[5], "mdi:chevron-triple-right", "sensor", "Tage")
+output_hardness = entity(messages_getjudo.entities[6], "mdi:water-minus", "number", "°dH", 1, 15)
+input_hardness = entity(messages_getjudo.entities[7], "mdi:water-plus", "sensor", "°dH")
+water_flow = entity(messages_getjudo.entities[8], "mdi:waves-arrow-right", "sensor", "L/h")
+batt_capacity = entity(messages_getjudo.entities[9], "mdi:battery-50", "sensor", "%")
+regenerations = entity(messages_getjudo.entities[10], "mdi:recycle-variant", "sensor")
+water_lock = entity(messages_getjudo.entities[11], "mdi:pipe-valve", "switch")
+regeneration_start = entity(messages_getjudo.entities[12], "mdi:recycle-variant", "switch")
+sleepmode = entity(messages_getjudo.entities[13], "mdi:pause-octagon", "number", "h", 0, 10)
+water_today = entity(messages_getjudo.entities[14], "mdi:chart-box", "sensor", "L")
+water_yesterday = entity(messages_getjudo.entities[15], "mdi:chart-box-outline", "sensor", "L")
+notify = notification_entity(messages_getjudo.entities[16], "mdi:alert-outline")
+
+#The maximum possible values for these settings have not been configured here. 
+#For a better handling of the sliders I have limited the values. 
+#If I need higher values I use the sleepmode to deactivate the leakage protection.
+extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, 60, 10) #can setup to max 600min 
+max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, 3000, 500) #can setup to max 5000L/h 
+extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, 500, 100)      #can setup to max 3000L
+
+try: 
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message
@@ -278,27 +285,35 @@ try:
     client.will_set(availability_topic, config_getjudo.AVAILABILITY_OFFLINE, qos=0, retain=True)
     client.connect(config_getjudo.BROKER, config_getjudo.PORT, 60)
     client.loop_start()
+except Exception as e:
+    sys.exit(messages_getjudo.debug[33])
 
-    day_today = 0
-    offset_total_water = 0
-    last_err_id = 0
+my_token = judo_login(config_getjudo.JUDO_USER, config_getjudo.JUDO_PASSWORD)
 
-    #Load stored variables:
-    print ("Load stored variables:")
-    print ("----------------------")
+day_today = 0
+offset_total_water = 0
+last_err_id = 0
+
+#Load stored variables:
+print (messages_getjudo.debug[34])
+print ("----------------------")
+try:
+    with open("temp_getjudo.pkl","rb") as temp_file:
+        last_err_id, offset_total_water, water_yesterday.value, day_today = pickle.load(temp_file)
+    print (messages_getjudo.debug[35].format(last_err_id))
+    print (messages_getjudo.debug[36].format(water_yesterday.value))
+    print (messages_getjudo.debug[37].format(offset_total_water))
+    print (messages_getjudo.debug[38].format(day_today))
+except Exception as e:
+    notify.publish([messages_getjudo.debug[29].format(sys.exc_info()[-1].tb_lineno),e], 3)
+
+notify.publish(messages_getjudo.debug[39], 2)
+
+while True:
+    if my_token == False:
+        break
     try:
-        with open("temp_getjudo.pkl","rb") as temp_file:
-            last_err_id, offset_total_water, water_yesterday.value, day_today = pickle.load(temp_file)
-        print (f"Last error ID: {last_err_id}")
-        print (f"Water consumption yesterday: {water_yesterday.value}")
-        print (f"Water consumption offset today: {offset_total_water}")
-        print (f"today's day: {day_today}")
-    except:
-        print("No tempfile found, setting variables to 0")
-    print ("  ")
-
-    while True:
-        print("GET error messages from Cloud-Service...")
+        #print("GET error messages from Cloud-Service...")
         error_response = http.request('GET',f"https://myjudo.eu/interface/?token={my_token}&group=register&command=get%20error%20messages")
         error_response_json = json.loads(error_response.data)
         
@@ -307,120 +322,92 @@ try:
 
             if error_response_json["data"][0]["type"] == "w":
                 error_message = messages_getjudo.warnings[error_response_json["data"][0]["error"]]
-                print(f"Warning: {error_message}")
-                client.publish(notification_topic, "Warning: " + error_message, qos=0, retain=True)
-
+                notify.publish(error_message, 1)
             elif error_response_json["data"][0]["type"] == "e":
                 error_message = messages_getjudo.errors[error_response_json["data"][0]["error"]]
-                print(f"Error: {error_message}")
-                client.publish(notification_topic, "Error: " + error_message, qos=0, retain=True)
+                notify.publish(error_message, 1)
+    except Exception as e:
+        notify.publish([messages_getjudo.debug[30].format(sys.exc_info()[-1].tb_lineno),e], 3)
+        notify.counter += 1 
 
-                #
-        print("GET device data from Cloud-Service...")
+    try:
+        #print("GET device data from Cloud-Service...")
         response = http.request('GET',f"https://www.myjudo.eu/interface/?token={my_token}&group=register&command=get%20device%20data")
         response_json = json.loads(response.data)
+        if response_json["status"] ==  "ok":
+            #print("Parsing values from response...")
+            my_serial = response_json["data"][0]["serialnumber"]
+            my_da = response_json["data"][0]["data"][0]["da"]
+            my_dt = response_json["data"][0]["data"][0]["dt"]
 
-        if "status" in response_json:
-            if response_json["status"] ==  "ok":
-                print("Parsing values from response...")
-                my_serial = response_json["data"][0]["serialnumber"]
-                my_da = response_json["data"][0]["data"][0]["da"]
-                my_dt = response_json["data"][0]["data"][0]["dt"]
+            next_revision.parse(response_json, 7, 0, 4)
+            total_water.parse(response_json, 8, 0, 8)
+            total_softwater_proportion.parse(response_json, 9, 0, 8)
+            salt_stock.parse(response_json,94, 0, 4)
+            salt_range.parse(response_json,94, 4, 8)
+            output_hardness.parse(response_json, 790, 18, 20)
+            input_hardness.parse(response_json, 790, 54, 56)
+            water_flow.parse(response_json, 790, 34, 38)
+            regenerations.parse(response_json, 791, 62, 66)
+            regeneration_start.parse(response_json, 791, 2, 4)
+            batt_capacity.parse(response_json, 93, 6, 8)
+            water_lock.parse(response_json, 792, 2, 4)
+            sleepmode.parse(response_json,792, 20, 22)
+            max_waterflow.parse(response_json, 792, 26, 30)
+            extraction_quantity.parse(response_json, 792, 30, 34)
+            extraction_time.parse(response_json, 792, 34, 38)
 
-                #Next revision in days #7
-                val = response_json["data"][0]["data"][0]["data"]["7"]["data"]
-                next_revision.value = int(le_hex_to_int(val[0:4])/24)
+            next_revision.value = int(next_revision.value/24)   #Calculation hours to days
+            total_water.value =float(total_water.value/1000) # Calculating from L to m³
+            total_softwater_proportion.value = float(total_softwater_proportion.value/1000)# Calculating from L to m³
+            total_hardwater_proportion.value = round((total_water.value - total_softwater_proportion.value),3)
+            salt_stock.value /= 1000
+            input_hardness.value =float(input_hardness.value/2) + 2 	               #ISSUE: Is this formular correct?
+            regeneration_start.value &= 0x0F
+            if regeneration_start.value > 0:
+                regeneration_start.value = 1
+            if water_lock.value > 1:
+                water_lock.value = 1
 
-                #Total Water Consumption #8
-                val = response_json["data"][0]["data"][0]["data"]["8"]["data"]
-                total_water.value = float(le_hex_to_int(val[0:8]))/1000
+            today = date.today()
+            #It's 12pm...a new day. Store today's value to yesterday's value and setting a new offset for a new count
+            if today.day != day_today:
+                day_today = today.day
+                offset_total_water = int(1000*total_water.value)
+                water_yesterday.value = water_today.value
+            water_today.value = int(1000*total_water.value) - offset_total_water
 
-                #Total Softwater Consumption #9
-                val = response_json["data"][0]["data"][0]["data"]["9"]["data"]
-                total_softwater_proportion.value = float(le_hex_to_int(val[0:8]))/1000
-                total_hardwater_proportion.value = round((total_water.value - total_softwater_proportion.value),3)
+            #print("Publishing parsed values over MQTT....")
+            outp_val_dict = {}
+            for obj in gc.get_objects():
+                if isinstance(obj, entity):
+                    outp_val_dict[obj.name] = str(obj.value)
+            publish_json(client, state_topic, outp_val_dict)
 
-                #Salt Stock & Salt Range #94
-                val = response_json["data"][0]["data"][0]["data"]["94"]["data"]
-                salt_stock.value = le_hex_to_int(val[0:4])/1000
-                salt_range.value = le_hex_to_int(val[4:8])
-
-                #Input/Output Hardness, Water flow rate #790
-                val =response_json["data"][0]["data"][0]["data"]["790"]["data"] 
-                output_hardness.value = int(val[18:20],16)
-                input_hardness.value = int(val[54:56],16)
-                input_hardness.value = float(input_hardness.value)/2 + 2            #ISSUE: Is this formular correct?
-                water_flow.value = le_hex_to_int(val[34:38])
-
-                #Regnerations #791
-                val = response_json["data"][0]["data"][0]["data"]["791"]["data"]
-                regenerations.value = le_hex_to_int(val[62:66])
-                regeneration_start.value = int(val[3:4])
-                if regeneration_start.value > 0:
-                    regeneration_start.value = 1
-
-                #Battery capacity #93
-                val = response_json["data"][0]["data"][0]["data"]["93"]["data"]
-                batt_capacity.value = int(val[6:8],16)
-
-                #Leakage protection valve #792
-                val = response_json["data"][0]["data"][0]["data"]["792"]["data"]
-                water_lock.value = int(val[2:4],16)
-                if water_lock.value > 1:
-                    water_lock.value = 1
-                sleepmode.value = int(val[20:22], 16)
-                max_waterflow.value = le_hex_to_int(val[26:30])
-                extraction_quantity.value = le_hex_to_int(val[30:34])
-                extraction_time.value = le_hex_to_int(val[34:38])
-
-                #water_today.value = get_water_daily(0)
-                #water_yesterday.value = get_water_daily(1)
-
-                #Workaround for get_water_daily()
-                today = date.today()
-                #It's 12pm...a new day. Store today's value to yesterday's value and setting a new offset for a new count
-                if today.day != day_today:
-                    day_today = today.day
-                    offset_total_water = int(1000*total_water.value)
-                    water_yesterday.value = water_today.value
-                water_today.value = int(1000*total_water.value) - offset_total_water
-
-                print("Publishing parsed values over MQTT....")
-                outp_val_dict = {}
-                for obj in gc.get_objects():
-                    if isinstance(obj, entity):
-                        outp_val_dict[obj.name] = str(obj.value)
-                publish_json(client, state_topic, outp_val_dict)
-
-            elif response_json["status"] == "error":
-                if response_json["data"] == "login failed":
-                    print("Error: No valid Token, trying to get a new one...")
-                    my_token = judo_login(config_getjudo.JUDO_USER, config_getjudo.JUDO_PASSWORD)
-                else:
-                    val = response_json["data"]
-                    print(f"Response Error: {val}")
+        elif response_json["status"] == "error":
+            notify.coutner += 1
+            if response_json["data"] == "login failed":
+                notify.publish(messages_getjudo.debug[23],3)
+                my_token = judo_login(config_getjudo.JUDO_USER, config_getjudo.JUDO_PASSWORD)
             else:
-                sys.exit("Error: Unspecific response status")
+                val = response_json["data"]
+                notify.publish(messages_getjudo.debug[24].format(val),3)
         else:
-            sys.exit("Error: Invalid response")
-        
-        with open("temp_getjudo.pkl","wb") as temp_file:
-            pickle.dump([last_err_id, offset_total_water, water_yesterday.value, day_today], temp_file)
+            print(messages_getjudo.debug[25])
+    
+    except Exception as e:
+        notify.publish([messages_getjudo.debug[31].format(sys.exc_info()[-1].tb_lineno),e],3)
+        notify.counter += 1 
 
-        print("Spend some time....")
+    if notify.counter >= config_getjudo.MAX_RETRIES:
+        notify.publish(messages_getjudo.debug[32].format(config_getjudo.MAX_RETRIES),3)
+        break;
 
-        time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
-    #----- MAIN PROGRAM END ----
+    notify.counter = 0
 
-#Crashlog:
-except Exception as e:
-    crash = ["Error on line {}".format(sys.exc_info()[-1].tb_lineno),"\n",e]
-    print(crash)
-    timeX=str(time.time())
-    with open("CRASH-" + timeX + ".txt","w") as crashLog:
-        for i in crash:
-            i = str(i)
-            crashLog.write(i)
+    with open("temp_getjudo.pkl","wb") as temp_file:
+        pickle.dump([last_err_id, offset_total_water, water_yesterday.value, day_today], temp_file)
 
-#wait 30sec for script auto restart initiated by systemd:
-time.sleep(30) 
+    time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
+#----- MAIN PROGRAM END ----
+
