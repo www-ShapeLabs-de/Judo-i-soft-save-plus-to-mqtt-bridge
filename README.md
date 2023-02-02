@@ -103,7 +103,9 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - max. extraction quantity, leakage protection config (input number slider)
   - max. waterflow, leakage protection config (input number slider)
 - other:
-  - Error- and warning messages of plant published to notification topic (LOCATION/NAME/notify). Can be used for hassio telegram bot…
+  - Error- and warning messages of plant published to notification topic (LOCATION/NAME/notify). Can be used for hassio telegram bot
+
+![This is an example, how to configure the notification as automation for Telegram-Bot](example_telegram_bot.png)
 
 
 
