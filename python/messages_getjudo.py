@@ -3,7 +3,73 @@
 import config_getjudo
 
 #DE
-if config_getjudo.MESSAGE_LANGUAGE == "DE":
+if config_getjudo.LANGUAGE == "DE":
+
+    entities = {
+        0 : "Revision_in",
+        1 : "Gesamtwasserverbrauch",
+        2 : "Gesamtweichwasseranteil",
+        3 : "Gesamthartwasseranteil",
+        4 : "Salzvorrat",
+        5 : "Salzreichweite",
+        6 : "Wunschwasserhaerte",
+        7 : "Rohwasserhaerte",
+        8 : "Wasserdurchflussmenge",
+        9 : "Batterierestkapazitaet",
+        10 : "Anzahl_Regenerationen",
+        11 : "Wasser_absperren",
+        12 : "Regeneration",
+        13 : "Sleepmode",
+        14 : "Verbrauch_Heute",
+        15 : "Verbrauch_Gestern",
+        16 : "Meldung",
+        17 : "max_Entnahmedauer",
+        18 : "max_Wasserdurchfluss",
+        19 : "max_Entnahmemenge"
+    }
+
+    debug = {
+        1: "Verbunden mit MQTT Broker...",
+        2: "Topics wurden abonniert...",
+        3: "Autoconfigs wurden gesendet...",
+        4: "Verbindung fehlgeschlagen, Fehlercode {}", #{rc}
+        5: "Eingehende Nachricht: {}{}", #{message.topic},{message.payload}
+        6: "Falscher Befehl!!",
+        7: "Leckageschutz wurde erfolgreich auf \"{}\" gestellt ", #{pos}
+        8: "HTTP-Fehler beim Schalten des Leckageschutzes",
+        9: "Befehlsfehler!!",
+        10: "Sleepmode wurde erfolgreich deaktiviert. Der Leckageschutz ist wieder aktiv",
+        11: "HTTP-Fehler beim Deaktivieren des Sleepmodes",
+        12: "Sleepmode-Zeit wurde erfolgreich auf {}h eingestellt", #{hours}
+        13: "HTTP-Fehler beim Einstellen der Sleepmode-Zeit",
+        14: "Sleepmode wurde erfolgreich eingeschaltet. Der Leckageschutz ist vorrübergehend deaktiviert",
+        15: "HTTP-Fehler beim Aktivieren des Sleepmodes",
+        16: "Regeneration wurde erfolgreich gestartet",
+        17: "HTTP-Fehler beim Starten der Regeneration",
+        18: "{} wurde erfolgreich auf den Wert {} gesetzt", #{obj.name}, {value}
+        19: "HTTP-Fehler beim setzen des Werts von: {}", #{obj.name}
+        20: "Fehler bei der int nach hex Umrechnung",
+        21: "myjudo.eu-login fehlgeschlagen! - Falsche Zugangsdaten??",
+        22: "Login erfolgreich, neuer Token: {}", #{login_response_json['token']}
+        23: "Kein valider Token, versuche einen Neuen zu bekommen...",
+        24: "Fehlerhafte Antwort vom Server: {}", #{val}
+        25: "Falsche, unspezifische Antwort vom Server ",
+        26: "Fehler bei MQTT Autoconfig",
+        27: "Scriptfehler - Befehl senden fehlgeschlagen in Zeile: {}", 
+        28: "Scriptfehler - Judo-login fehlgeschlagen in Zeile: {}",
+        29: "Scriptfehler - Laden der Variablen aus Datei fehlgeschlagen in Zeile: {}",
+        30: "Scriptfehler - Fehler beim Auswerten des Fehlerspeichers in Zeile: {}",
+        31: "Scriptfehler - Fehler beim Holen und Auswerten der Gerätedaten in Zeile: {}",
+        32: "{} Fehler beim Auswerten des Datenpakets. Gebe aus!! -> Fehlerhafte Internetverbindung???", #{config_getjudo.MAX_RETRIES}
+        33: "MQTT Login fehlgeschlagen, beende Script!",
+        34: "Lade gespeicherte Variablen",
+        35: "Letzte Fehler-ID: {}",
+        36: "Wasserverbrauch gestern: {}",
+        37: "Offset für heutigen Wasserverbrauch: {}",
+        38: "Letzte Ausführung des Scripts: {}",
+        39: "Initialisierung erfolgreich!"
+    }
+
     warnings = {
         "20": "Leckageschutz geschlossen.",
         "21": "Leckageschutz geschlossen Max. Entnahmemenge überschritten. Prüfen, ob Leckage vorliegt.",
@@ -63,8 +129,75 @@ if config_getjudo.MESSAGE_LANGUAGE == "DE":
         "14": "RS 485 Verbindungs-problem"
     }
 
-
+#ENG
 else:
+
+    entities = {
+        0: "Revision_in",
+        1: "Total_water_consumption",
+        2: "Total_softwater_proportion",
+        3: "Total_hardwater_proportion",
+        4: "Salt_stock",
+        5: "Salt_range",
+        6: "Output_hardness",
+        7: "Input_hardness",
+        8: "Water_flow_rate",
+        9: "Battery_capacity",
+        10: "Regeneration_count",
+        11: "Water_lock",
+        12: "Regeneration",
+        13: "Sleepmode",
+        14: "Consumption_today",
+        15: "Consumption_yesterday",
+        16: "Notification",
+        17: "max_withdrawal_quantity",
+        18: "max_volumetric_flow_rate",
+        19: "max_consumption"
+    }
+
+    debug = {
+        1: "Connected to MQTT Broker...",
+        2: "Topics has been subscribed...",
+        3: "Autoconfigs has been sent...",
+        4: "Failed to connect, return code {}",
+        5: "Incomming Message: {}{}",
+        6: "Command_Name_Error!!",
+        7: "Leackage protection has been switched {} successfully ",
+        8: "HTTP Error while setting the leackage protection",
+        9: "Command_Error!!",
+        10: "Sleepmode has been successfully disabled, Leakage protection is active now",
+        11: "HTTP Error while disabling the sleepmode",
+        12: "Sleepmodetime was set to {}h successfully",
+        13: "HTTP Error while setting up the sleepmode-time",
+        14: "Sleepmode has been successfully enabled, Leakage protection is disabled now",
+        15: "HTTP Error while enabling the sleepmode",
+        16: "Regeneration has been started successfully",
+        17: "HTTP Error while setting the regeneration-trigger",
+        18: "{} has been set to {} successfully",
+        19: "HTTP Error while setting {}",
+        20: "failed by int to hex conversion",
+        21: "myjudo.eu login failed! - Wrong credentials?? EXIT",
+        22: "Login successfull, got new token: {login_response_json['token']}",
+        23: "Error: No valid Token, trying to get a new one...",
+        24: "Response Error: {}",
+        25: "Error: Unspecific response status",
+        26: "Error while MQTT autoconfig",
+        27: "Script error - failed to send command on line: {}", 
+        28: "Script error - failed judo login on line: {}",
+        29: "Script error - loading variables failed on line: {}",
+        30: "Script error - getting or parsing fault memory failed on line: {}",
+        31: "Script error - getting or parsing data failed on line: {}",
+        32: "{} errors while fetching data in sequence. Giving up!! -> Faulty internet connection???", #{config_getjudo.MAX_RETRIES}
+        33: "MQTT login failed, canceling the script",
+        34: "Loading stored variables",
+        35: "Last error-ID: {}",
+        36: "Total water consumption yesterday: {}",
+        37: "Offset for todays waterconsumption: {}",
+        38: "Last run of script: {}",
+        39: "Init successfull!"
+    }
+
+
     warnings = {
         "20": "Leakage protection closed.",
         "21": "Leakage protection closed Max. water quantity exceeded. Check if there is a leakage.",
@@ -100,11 +233,11 @@ else:
         "67": "Fault! Keyboard defectiv. Kindly contact the customer service.",
         "68": "Fault! Filling valve  leaky. Kindly contact the customer service.",
         "69": "Leakage protection in sleep mode, remaining duration $$$ hours.",
-        "70": "Leckageschutz geschlossen, Bodensensor meldet Leckage. Prüfen, ob Leckage vorliegt.",
-        "71": "Im Lernmodus, Leckageschutz geschlossen, max. Entnahmemenge wurde überschritten. Prüfen ob Leckage vorliegt.",
-        "72": "Im Lernmodus, Leckageschutz geschlossen, max. Volumenstrom wurde überschritten. Prüfen ob Leckage vorliegt.",
-        "73": "Im Lernmodus, Leckageschutz geschlossen, max. Entnahmedauer wurde überschritten. Prüfen ob Leckage vorliegt.",
-        "74": "Störung! Kugelventil defekt. Bitte verständigen Sie den Kundendienst."
+        "70": "Leakage protection closed, bottom sensor reports leakage. Check if there is a leakage.",
+        "71": "Teachingmode, Leakage protection closed Max. water quantity exceeded. Check if there is a leakage.",
+        "72": "Teachingmode, Leakage protection closed Max. sampling duration exceeded. Check if there is a leakage.",
+        "73": "Teachingmode, Leakage protection closed Max. water flow exceeded. Check if there is a leakage.",
+        "74": "Fault! Ball valve defect. Kindly contact the customer service."
     }
 
     errors = {
@@ -123,5 +256,9 @@ else:
         "13": "Double fault: Lsu is not detected and Lso always wet",
         "14": "RS 485 connection problem"
     }
+
+
+
+
 
 
