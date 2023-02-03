@@ -362,7 +362,7 @@ while True:
             total_softwater_proportion.value = float(total_softwater_proportion.value/1000)# Calculating from L to m³
             total_hardwater_proportion.value = round((total_water.value - total_softwater_proportion.value),3)
             salt_stock.value /= 1000
-            input_hardness.value =float(input_hardness.value/2) + 2 	               #ISSUE: Is this formular correct?
+            #input_hardness.value =float(input_hardness.value/2) + 2 	               #This is the formula for the maximum adjustable desired output hardness. See Chapter 9 - Technical data
             regeneration_start.value &= 0x0F
             if regeneration_start.value > 0:
                 regeneration_start.value = 1
