@@ -73,7 +73,8 @@ The token can be used to create a URL that can also be used to read out the seri
 https://www.myjudo.eu/interface/?token=INSERT_TOKEN_HERE&group=register&command=get%20device%20data
 As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under SERIALNUMBER. The software can now be flashed into the ESP
 
-
+### !!!!Attention!!!!
+###  Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!
 
 ### Startup
 Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
@@ -109,16 +110,12 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
 
 
 
-## !!!!Attention!!!!
-###  Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!
 
 
 
 
 
-
-
-This Project based of informations from:
+### This Project based of informations from:
 - https://blog.muwave.de/2017/06/monitoring-and-controlling-a-judo-i-soft-plus-water-softening-device-via-lan/
 - https://forum.fhem.de/index.php/topic,115696.15.html
 - https://knx-user-forum.de/forum/projektforen/edomi/1453632-lbs19002090-judo-i-soft-wasserenth%C3%A4rtungsanlage/page2
