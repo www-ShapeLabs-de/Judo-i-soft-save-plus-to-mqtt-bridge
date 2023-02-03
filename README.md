@@ -109,6 +109,15 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
 
 
 
+## !!!!Attention!!!!
+###  Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!
+
+
+
+
+
+
+
 This Project based of informations from:
 - https://blog.muwave.de/2017/06/monitoring-and-controlling-a-judo-i-soft-plus-water-softening-device-via-lan/
 - https://forum.fhem.de/index.php/topic,115696.15.html
