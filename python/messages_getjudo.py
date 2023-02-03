@@ -50,7 +50,7 @@ if config_getjudo.LANGUAGE == "DE":
         19: "HTTP-Fehler beim setzen des Werts von: {}", #{obj.name}
         20: "Fehler bei der int nach hex Umrechnung",
         21: "myjudo.eu-login fehlgeschlagen! - Falsche Zugangsdaten??",
-        22: "Login erfolgreich, neuer Token: {}", #{login_response_json['token']}
+        22: "Login erfolgreich, neuer Token: {} !!!!Achtung, Diesen Token nirgendwo Posten oder Verschicken. Hierdurch erhält man Vollzugriff auf die Anlage!!!!", #{login_response_json['token']}
         23: "Kein valider Token, versuche einen Neuen zu bekommen...",
         24: "Fehlerhafte Antwort vom Server: {}", #{val}
         25: "Falsche, unspezifische Antwort vom Server ",
@@ -177,7 +177,7 @@ else:
         19: "HTTP Error while setting {}",
         20: "failed by int to hex conversion",
         21: "myjudo.eu login failed! - Wrong credentials?? EXIT",
-        22: "Login successfull, got new token: {login_response_json['token']}",
+        22: "Login successfull, got new token: {login_response_json['token']} !!!!Attention, Don't Post or Publish this Token anywhere. It allows grand access to the plant!!!!",
         23: "Error: No valid Token, trying to get a new one...",
         24: "Response Error: {}",
         25: "Error: Unspecific response status",
