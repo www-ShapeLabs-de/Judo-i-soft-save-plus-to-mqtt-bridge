@@ -272,9 +272,9 @@ notify = notification_entity(messages_getjudo.entities[16], "mdi:alert-outline")
 #The maximum possible values for these settings have not been configured here. 
 #For a better handling of the sliders I have limited the values. 
 #If I need higher values I use the sleepmode to deactivate the leakage protection.
-extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, 60, 10) #can setup to max 600min 
-max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, 3000, 500) #can setup to max 5000L/h 
-extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, 500, 100)      #can setup to max 3000L
+extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, 600, 10) #can setup to max 600min 
+max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, 5000, 500) #can setup to max 5000L/h 
+extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, 3000, 100)      #can setup to max 3000L
 
 try: 
     client = mqtt.Client()
