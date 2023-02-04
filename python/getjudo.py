@@ -272,9 +272,9 @@ notify = notification_entity(messages_getjudo.entities[16], "mdi:alert-outline")
 #The maximum possible values for these settings have not been configured here. 
 #For a better handling of the sliders I have limited the values. 
 #If I need higher values I use the sleepmode to deactivate the leakage protection.
-extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, 600, 10) #can setup to max 600min 
-max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, 5000, 500) #can setup to max 5000L/h 
-extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, 3000, 100)      #can setup to max 3000L
+extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, 60, 10) #can setup to max 600min 
+max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, 3000, 500) #can setup to max 5000L/h 
+extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, 500, 100)      #can setup to max 3000L
 
 try: 
     client = mqtt.Client()
@@ -309,9 +309,20 @@ except Exception as e:
 
 notify.publish(messages_getjudo.debug[39], 2)
 
-while True:
+#while True:
+def loop(kwargs):
+    global my_token
+    global last_err_id
+    global day_today
+    global water_today
+    global offset_total_water
+    global my_serial
+    global my_da
+    global my_dt
+
     if my_token == False:
-        break
+        #break
+        return
     try:
         #print("GET error messages from Cloud-Service...")
         error_response = http.request('GET',f"https://myjudo.eu/interface/?token={my_token}&group=register&command=get%20error%20messages")
@@ -362,7 +373,7 @@ while True:
             total_softwater_proportion.value = float(total_softwater_proportion.value/1000)# Calculating from L to m³
             total_hardwater_proportion.value = round((total_water.value - total_softwater_proportion.value),3)
             salt_stock.value /= 1000
-            #input_hardness.value =float(input_hardness.value/2) + 2 	               #This is the formula for the maximum adjustable desired output hardness. See Chapter 9 - Technical data
+            #input_hardness.value =float(input_hardness.value/2) + 2 	               #ISSUE: Is this formular correct?
             regeneration_start.value &= 0x0F
             if regeneration_start.value > 0:
                 regeneration_start.value = 1
@@ -401,13 +412,23 @@ while True:
 
     if notify.counter >= config_getjudo.MAX_RETRIES:
         notify.publish(messages_getjudo.debug[32].format(config_getjudo.MAX_RETRIES),3)
-        break;
+        #break;
+        return
 
     notify.counter = 0
+    #print( "Judo - finished....")      
 
+try:
     with open(config_getjudo.TEMP_FILE,"wb") as temp_file:
         pickle.dump([last_err_id, offset_total_water, water_yesterday.value, day_today], temp_file)
+except Exception as e:
+    notify.publish([messages_getjudo.debug[29].format(sys.exc_info()[-1].tb_lineno),e], 3)
 
-    time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
+    #time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
 #----- MAIN PROGRAM END ----
 
+if config_getjudo.APPDAEMON == False:
+    while True:
+        loop(20)
+        print( "Judo - Spend some time....")        
+        time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
