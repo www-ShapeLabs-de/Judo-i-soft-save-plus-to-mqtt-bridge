@@ -27,4 +27,8 @@ LANGUAGE = "DE"									# "DE" / "ENG"
 MQTT_DEBUG_LEVEL = 3							# 0=0ff, 1=Judo-Warnings/Errors, 2=Command feedback  3=Script Errors, Exceptions
 MAX_RETRIES = 3
 
+# for Appdaemon the whole path is required "/config/appdaemon/apps/Judo/temp_getjudo.pkl", otherwise "temp_getjudo.pkl"
+TEMP_FILE = "/config/appdaemon/apps/main/temp_getjudo.pkl"
+APPDAEMON = True                                # if running in Appdaemon docker
+
 

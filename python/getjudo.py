@@ -298,7 +298,7 @@ last_err_id = 0
 print (messages_getjudo.debug[34])
 print ("----------------------")
 try:
-    with open("temp_getjudo.pkl","rb") as temp_file:
+    with open(config_getjudo.TEMP_FILE,"rb") as temp_file:
         last_err_id, offset_total_water, water_yesterday.value, day_today = pickle.load(temp_file)
     print (messages_getjudo.debug[35].format(last_err_id))
     print (messages_getjudo.debug[36].format(water_yesterday.value))
@@ -405,7 +405,7 @@ while True:
 
     notify.counter = 0
 
-    with open("temp_getjudo.pkl","wb") as temp_file:
+    with open(config_getjudo.TEMP_FILE,"wb") as temp_file:
         pickle.dump([last_err_id, offset_total_water, water_yesterday.value, day_today], temp_file)
 
     time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
