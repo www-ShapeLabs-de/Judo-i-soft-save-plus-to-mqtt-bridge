@@ -177,7 +177,7 @@ else:
         19: "HTTP Error while setting {}",
         20: "failed by int to hex conversion",
         21: "myjudo.eu login failed! - Wrong credentials?? EXIT",
-        22: "Login successfull, got new token: {login_response_json['token']} !!!!Attention, Don't Post or Publish this Token anywhere. It allows grand access to the plant!!!!",
+        22: "Login successful, got new token: {}", #{login_response_json['token']} !!!!Attention, Don't Post or Publish this Token anywhere. It allows grand access to the plant!!!!",
         23: "Error: No valid Token, trying to get a new one...",
         24: "Response Error: {}",
         25: "Error: Unspecific response status",
@@ -194,7 +194,7 @@ else:
         36: "Total water consumption yesterday: {}",
         37: "Offset for todays waterconsumption: {}",
         38: "Last run of script: {}",
-        39: "Init successfull!"
+        39: "Init successful!"
     }
 
 
