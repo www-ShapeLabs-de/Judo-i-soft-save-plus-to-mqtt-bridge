@@ -1,16 +1,6 @@
 # Judo i-soft save+ to mqtt bridge for homeassistant
 
---------------------------------------------------------
-Difference to original code:
-This version can be uploaded directly into HomeAssistant
-Python code running in AppDaemon docker
 
--> Work in Progress!
-
-Many thanks to www-shapelabs-de !!!
-Without his code I wouldn´t have been able to get the 
-Judo system integrated
---------------------------------------------------------
 
 This is a small workarount to read and control the Judo isoft safe+ water softener with homeassisant (hassio). It is the version with the small character-lcd and leakage protection.
 
@@ -23,19 +13,19 @@ There are 2 versions of the system, which sound very similar.
 
 To do this, you must register the system for the cloud service as described in the user manual and create a user account. There is also a judo smartphone app for this, but it is of course nicer to have everything in homeassisant :-)
 
+## Config:
+General settings must be made in the config file. 
+ - First there are the access data to the myjudo.eu server.
+ - Furthermore there are the MQTT broker settings. The IP of the MQTT broker must be specified here, as well as the access data to the broker.
+- General settings like location and name should also be defined. This results in the MQTT topic
+- In addition, the language can be set between German and English, as well as the MQTT debug level. As default user the value "1" is recommended.
+- At last you have to set in the script in which environment it should run, see following instructions, there are two ways to run this script:
 
-
-I've made two Versions of this Project:
-
-### First Version: esp8266 (legacy)
-
-A small device to write and read settings to Judo i-soft safe+ water softening system with homeassistant.
-The hardware of this project consists of an ESP8266 in basic circuitry. You can also just use a node MCU etc.. No further components are necessary.
-
-
-### Second Version: python
-
-This is a small script which can be executed on any platform. In config_getjudo.py you only have to enter your access data for your myjudo.eu account and the settings for your mqtt broker. 
+### Running on a generic Linux platform:
+The requirement is of course that a Python environment is installed on the Linux:
+```
+$ sudo apt-get install python3
+ ```
 
 It may still be necessary to install the paho-mqtt package:
 ```
@@ -62,12 +52,10 @@ User rights may still need to be assigned:
 ```
 sudo chmod +x /etc/systemd/system/getjudo.service && chmod +x ~/*getjudo.py
 ```
-
 Reload the daemon:
 ```
 $sudo systemctl daemon-reload
 ```
-
 Enable the autostart, if our platform restarts e.g.:
 ```
 $sudo systemctl enable getjudo.service
@@ -77,16 +65,12 @@ Start the service:
 $sudo systemctl start getjudo.service
 ```
 
-### Config (ESP8266)
-It is necessary to generate a token. To do this, log into the cloud service with your user account on https://www.myjudo.eu.
-After the successful login, you can copy the hexadecimal-token (just take the "knmtoken" not the "judotoken") from the URL in the address bar of the browser.
-The token must then be inserted under TOKEN in the code.
-The token can be used to create a URL that can also be used to read out the serial number and all other data:
-https://www.myjudo.eu/interface/?token=INSERT_TOKEN_HERE&group=register&command=get%20device%20data
-As a response you get the complete data set, which also contains the serial number of the device at the beginning, which must then be entered in the code under SERIALNUMBER. The software can now be flashed into the ESP
 
-### !!!!Attention!!!!
-###  Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!
+### Running in AppDeamon docker directly in HomeAssistant
+-> Work in Progress!
+
+
+###  !!!!Attention!!!! Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!
 
 ### Startup
 Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
