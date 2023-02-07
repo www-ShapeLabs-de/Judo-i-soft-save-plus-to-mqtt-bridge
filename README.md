@@ -24,7 +24,8 @@ General settings must be made in the config file.
 ### Running on a generic Linux platform:
 The requirement is of course that a Python environment is installed on the Linux:
 ```
-$ sudo apt-get install python3
+$ sudo apt update && upgrade
+$ sudo apt install python3-pip
  ```
 
 It may still be necessary to install the paho-mqtt package:
