@@ -68,8 +68,28 @@ $sudo systemctl start getjudo.service
 
 
 ### Running in AppDeamon docker directly in HomeAssistant
--> Work in Progress!
+0. MQTT should be already setup and running
+1. Install AppDaemon through HomeAssistant Add-Ons store (https://community.home-assistant.io/t/home-assistant-community-add-on-appdaemon-4/163259)
+2. Configure AppDaemon with the following settings:
 
+init_commands: []
+python_packages:
+  - paho-mqtt
+system_packages:
+
+3. Copy all files from the python folder into the folder appdaemon/apps/main (inkl. temp_getjudo.pkl file)
+4. Modify the apps.yaml file:
+
+---
+main_app:
+  module: main_entity
+  class: main_loop
+
+5. Modify config_judo.py to your system
+6. Start AppDaemon and check the logs for potential errors
+7. You can easily add more scripts into main_entity.py -> main file, where all scripts are called
+
+-> the getjudo.py can be also started from a local Win10 VSCode installation, for easier tests of the config (after adding python through extensions and paho-mqtt with pip install)
 
 ###  !!!!Attention!!!! Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!
 
