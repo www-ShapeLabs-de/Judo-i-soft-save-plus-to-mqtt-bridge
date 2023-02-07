@@ -72,18 +72,12 @@ $sudo systemctl start getjudo.service
 1. Install AppDaemon and Studio Code Server (Optional) through HomeAssistant Add-Ons store (https://community.home-assistant.io/t/home-assistant-community-add-on-appdaemon-4/163259)
 2. Configure AppDaemon with the following settings:
 
-init_commands: []
-python_packages:
-  - paho-mqtt
-system_packages:
+![image](https://user-images.githubusercontent.com/16063664/217333390-7f41fee9-523c-47e6-8c77-b607983ba2c4.png)
 
 3. Copy all files from the python folder into the folder appdaemon/apps/main (inkl. temp_getjudo.pkl file) -> Studio Code Server
 4. Modify the apps.yaml file:
 
----
-main_app:
-  module: main_entity
-  class: main_loop
+![image](https://user-images.githubusercontent.com/16063664/217333241-45d49c34-ddfb-48be-a4ae-611a85433025.png)
 
 5. Modify config_judo.py to your system
 6. Start AppDaemon and check the logs for potential errors
