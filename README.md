@@ -69,7 +69,7 @@ $sudo systemctl start getjudo.service
 
 ### Running in AppDeamon docker directly in HomeAssistant
 0. MQTT should be already setup and running
-1. Install AppDaemon through HomeAssistant Add-Ons store (https://community.home-assistant.io/t/home-assistant-community-add-on-appdaemon-4/163259)
+1. Install AppDaemon and Studio Code Server (Optional) through HomeAssistant Add-Ons store (https://community.home-assistant.io/t/home-assistant-community-add-on-appdaemon-4/163259)
 2. Configure AppDaemon with the following settings:
 
 init_commands: []
@@ -77,7 +77,7 @@ python_packages:
   - paho-mqtt
 system_packages:
 
-3. Copy all files from the python folder into the folder appdaemon/apps/main (inkl. temp_getjudo.pkl file)
+3. Copy all files from the python folder into the folder appdaemon/apps/main (inkl. temp_getjudo.pkl file) -> Studio Code Server
 4. Modify the apps.yaml file:
 
 ---
