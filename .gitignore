@@ -1,1 +1,5 @@
 .vscode/settings.json
+
+# ignore developer's config file with personal credentials. 
+# In case of changes in the config file, these must be manually comitted.
+config_getjudo.py
