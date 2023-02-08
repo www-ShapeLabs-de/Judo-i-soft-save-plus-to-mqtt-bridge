@@ -124,8 +124,21 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - max. waterflow, leakage protection config (input number slider)
 - other:
   - Error- and warning messages of plant published to notification topic (LOCATION/NAME/notify). Can be used for hassio telegram bot:
-  
-![This is an example, how to configure the notification as automation for Telegram-Bot](example_telegram_bot.png)
+
+
+```
+#This is an example template, how to configure the notification as automation for Telegram-Bot
+
+#Trigger:
+platform: mqtt
+topic: Keller/Judo_isoftsaveplus/notify
+
+#Action:
+service: notify.ha_message
+data:
+  message: "Judo I-soft SAVE+: {{states(\"sensor.judo_isoftsaveplus_keller_meldung\")}}"
+```
+
 
 
 
