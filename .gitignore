@@ -3,3 +3,4 @@
 # ignore developer's config file with personal credentials. 
 # In case of changes in the config file, these must be manually comitted.
 python/config_getjudo.py
+python/temp_getjudo.py

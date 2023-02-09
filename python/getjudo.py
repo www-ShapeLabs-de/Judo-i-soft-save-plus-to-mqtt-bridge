@@ -4,10 +4,10 @@ import urllib3
 import json
 import time
 import gc
+import sys
 import config_getjudo
 import messages_getjudo
 import hashlib
-import sys
 from paho.mqtt import client as mqtt
 from datetime import date
 import pickle
@@ -69,8 +69,13 @@ class entity():
         elif self.entity_type == "sensor":
             entity_config["unit_of_measurement"] = self.unit
 
+        elif self.entity_type == "select":
+            entity_config["command_template"] = "{\"" + self.name + "\": {{ value }}}"
+            entity_config["options"] = self.unit
+
         else:
             print(messages_getjudo.debug[26])
+            return
 
         autoconf_topic = f"homeassistant/{self.entity_type}/{config_getjudo.LOCATION}/{config_getjudo.NAME}_{self.name}/config"
         publish_json(client, autoconf_topic, entity_config)
@@ -163,6 +168,9 @@ def on_message(client, userdata, message):
     elif extraction_quantity.name in command_json:
         set_value(extraction_quantity, 76, command_json[extraction_quantity.name], 16)
 
+    elif holidaymode.name in command_json:
+        set_holidaymode(command_json[holidaymode.name])
+
     else:
         print(messages_getjudo.debug[6])
 
@@ -188,9 +196,21 @@ def set_sleepmode(hours):
     else:
         if send_command("171", str(hours)):
             notify.publish(messages_getjudo.debug[12].format(hours), 2)
-        time.sleep(2)
         if send_command("171", ""):
             notify.publish(messages_getjudo.debug[14], 2)
+
+
+def set_holidaymode(mode):
+    if mode == messages_gejudo.holiday_options[1]:      #lock
+        send_command("73", "9")
+    elif mode == messages_gejudo.holiday_options[2]:    #mode1
+        send_command("77", "3")
+    elif mode == messages_gejudo.holiday_options[3]:    #mode2
+        send_command("77", "5")
+    else:                                               #off
+        if send_command("73", ""):
+            notify.publish(messages_getjudo.debug[40], 1)
+        send_command("77", "0")
 
 
 def start_regeneration():
@@ -242,7 +262,7 @@ def judo_login(username, password):
         return False
 
 
-#----- MAIN PROGRAM ----
+#----- INIT ----
 command_topic =f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/command"
 state_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/state"
 availability_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/status"
@@ -265,16 +285,14 @@ regenerations = entity(messages_getjudo.entities[10], "mdi:recycle-variant", "se
 water_lock = entity(messages_getjudo.entities[11], "mdi:pipe-valve", "switch")
 regeneration_start = entity(messages_getjudo.entities[12], "mdi:recycle-variant", "switch")
 sleepmode = entity(messages_getjudo.entities[13], "mdi:pause-octagon", "number", "h", 0, 10)
+extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, config_getjudo.LIMIT_EXTRACTION_TIME, 10)
+max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, config_getjudo.LIMIT_MAX_WATERFLOW, 500)
+extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, config_getjudo.LIMIT_EXTRACTION_QUANTITY, 100)
+holidaymode = entity(messages_getjudo.entities[20], "mdi:palm-tree", "select", messages_getjudo.holiday_options)
 water_today = entity(messages_getjudo.entities[14], "mdi:chart-box", "sensor", "L")
 water_yesterday = entity(messages_getjudo.entities[15], "mdi:chart-box-outline", "sensor", "L")
 notify = notification_entity(messages_getjudo.entities[16], "mdi:alert-outline")
 
-#The maximum possible values for these settings have not been configured here. 
-#For a better handling of the sliders I have limited the values. 
-#If I need higher values I use the sleepmode to deactivate the leakage protection.
-extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, 60, 10) #can setup to max 600min 
-max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, 3000, 500) #can setup to max 5000L/h 
-extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, 500, 100)      #can setup to max 3000L
 
 try: 
     client = mqtt.Client()
@@ -309,20 +327,11 @@ except Exception as e:
 
 notify.publish(messages_getjudo.debug[39], 2)
 
-#while True:
-def loop(kwargs):
-    global my_token
-    global last_err_id
-    global day_today
-    global water_today
-    global offset_total_water
-    global my_serial
-    global my_da
-    global my_dt
 
-    if my_token == False:
-        #break
-        return
+#----- MAIN Program ---- 
+def main():
+    global my_token, last_err_id, day_today, water_today, offset_total_water, my_serial, my_da, my_dt
+
     try:
         #print("GET error messages from Cloud-Service...")
         error_response = http.request('GET',f"https://myjudo.eu/interface/?token={my_token}&group=register&command=get%20error%20messages")
@@ -339,7 +348,7 @@ def loop(kwargs):
                 notify.publish(error_message, 1)
     except Exception as e:
         notify.publish([messages_getjudo.debug[30].format(sys.exc_info()[-1].tb_lineno),e], 3)
-        notify.counter += 1 
+        return 0
 
     try:
         #print("GET device data from Cloud-Service...")
@@ -367,13 +376,22 @@ def loop(kwargs):
             max_waterflow.parse(response_json, 792, 26, 30)
             extraction_quantity.parse(response_json, 792, 30, 34)
             extraction_time.parse(response_json, 792, 34, 38)
+            holidaymode.parse(response_json,792, 38, 40)
+
+            if holidaymode.value == 3:      #mode1
+                holidaymode.value = messages_getjudo.holiday_options[2]
+            elif holidaymode.value == 5:    #mode2
+                holidaymode.value = messages_getjudo.holiday_options[3]
+            elif holidaymode.value == 9:    #lock
+                holidaymode.value = messages_getjudo.holiday_options[1]
+            else:                           #off
+                holidaymode.value = messages_getjudo.holiday_options[0]
 
             next_revision.value = int(next_revision.value/24)   #Calculation hours to days
             total_water.value =float(total_water.value/1000) # Calculating from L to m³
             total_softwater_proportion.value = float(total_softwater_proportion.value/1000)# Calculating from L to m³
             total_hardwater_proportion.value = round((total_water.value - total_softwater_proportion.value),3)
-            salt_stock.value /= 1000
-            #input_hardness.value =float(input_hardness.value/2) + 2 	               #ISSUE: Is this formular correct?
+            salt_stock.value /= 1000 
             regeneration_start.value &= 0x0F
             if regeneration_start.value > 0:
                 regeneration_start.value = 1
@@ -396,39 +414,42 @@ def loop(kwargs):
             publish_json(client, state_topic, outp_val_dict)
 
         elif response_json["status"] == "error":
-            notify.coutner += 1
+            notify.counter += 1
             if response_json["data"] == "login failed":
                 notify.publish(messages_getjudo.debug[23],3)
                 my_token = judo_login(config_getjudo.JUDO_USER, config_getjudo.JUDO_PASSWORD)
+                return 0
             else:
                 val = response_json["data"]
                 notify.publish(messages_getjudo.debug[24].format(val),3)
+                return 0
         else:
             print(messages_getjudo.debug[25])
-    
+            return 0
     except Exception as e:
         notify.publish([messages_getjudo.debug[31].format(sys.exc_info()[-1].tb_lineno),e],3)
-        notify.counter += 1 
+        return 0
 
-    if notify.counter >= config_getjudo.MAX_RETRIES:
-        notify.publish(messages_getjudo.debug[32].format(config_getjudo.MAX_RETRIES),3)
-        #break;
-        return
+    try:
+        with open(config_getjudo.TEMP_FILE,"wb") as temp_file:
+            pickle.dump([last_err_id, offset_total_water, water_yesterday.value, day_today], temp_file)
+    except Exception as e:
+        notify.publish([messages_getjudo.debug[29].format(sys.exc_info()[-1].tb_lineno),e], 3)
+        return 0
 
-    notify.counter = 0
-    #print( "Judo - finished....")      
+    return 1
 
-try:
-    with open(config_getjudo.TEMP_FILE,"wb") as temp_file:
-        pickle.dump([last_err_id, offset_total_water, water_yesterday.value, day_today], temp_file)
-except Exception as e:
-    notify.publish([messages_getjudo.debug[29].format(sys.exc_info()[-1].tb_lineno),e], 3)
-
-    #time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
-#----- MAIN PROGRAM END ----
+#----- MAIN LOOP END ----
 
 if config_getjudo.APPDAEMON == False:
     while True:
-        loop(20)
-        print( "Judo - Spend some time....")        
+        if main() == 1:
+            notify.counter = 0
+        else:
+            notify.counter += 1
+        if notify.counter >= config_getjudo.MAX_RETRIES:
+            notify.publish(messages_getjudo.debug[32].format(config_getjudo.MAX_RETRIES),1)
+            break
+        if my_token == False:
+            break
         time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)

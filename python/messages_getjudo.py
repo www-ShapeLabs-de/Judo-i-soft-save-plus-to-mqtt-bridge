@@ -1,9 +1,13 @@
 #!/urs/bin/python3
 # -*- coding: utf-8 -*-
-import config_getjudo
+
+#import config_getjudo
+import config_getjudo							#Developer's config-file Path...
 
 #DE
 if config_getjudo.LANGUAGE == "DE":
+
+    holiday_options = ["Aus", "Absperren", "Urlaubsmodus_1", "Urlaubsmodus_2"]
 
     entities = {
         0 : "Revision_in",
@@ -25,7 +29,8 @@ if config_getjudo.LANGUAGE == "DE":
         16 : "Meldung",
         17 : "max_Entnahmedauer",
         18 : "max_Wasserdurchfluss",
-        19 : "max_Entnahmemenge"
+        19 : "max_Entnahmemenge",
+        20 : "Urlaubsmodus"
     }
 
     debug = {
@@ -60,14 +65,15 @@ if config_getjudo.LANGUAGE == "DE":
         29: "Scriptfehler - Laden der Variablen aus Datei fehlgeschlagen in Zeile: {}",
         30: "Scriptfehler - Fehler beim Auswerten des Fehlerspeichers in Zeile: {}",
         31: "Scriptfehler - Fehler beim Holen und Auswerten der Gerätedaten in Zeile: {}",
-        32: "{} Fehler beim Auswerten des Datenpakets. Gebe aus!! -> Fehlerhafte Internetverbindung???", #{config_getjudo.MAX_RETRIES}
+        32: "{} Fehler in Folge beim Auswerten oder Erhalten der Daten. Gebe auf!! -> Fehlerhafte Internetverbindung???", #{config_getjudo.MAX_RETRIES}
         33: "MQTT Login fehlgeschlagen, beende Script!",
         34: "Lade gespeicherte Variablen",
         35: "Letzte Fehler-ID: {}",
         36: "Wasserverbrauch gestern: {}",
         37: "Offset für heutigen Wasserverbrauch: {}",
         38: "Letzte Ausführung des Scripts: {}",
-        39: "Initialisierung erfolgreich!"
+        39: "Initialisierung erfolgreich!",
+        40: "Urlaubsmodus wurde erfolgreich deaktiviert"
     }
 
     warnings = {
@@ -132,6 +138,8 @@ if config_getjudo.LANGUAGE == "DE":
 #ENG
 else:
 
+    holiday_options = ["Off", "Waterlock", "Holidaymode_1", "Holidaymode_2"]
+
     entities = {
         0: "Revision_in",
         1: "Total_water_consumption",
@@ -152,7 +160,8 @@ else:
         16: "Notification",
         17: "max_withdrawal_quantity",
         18: "max_volumetric_flow_rate",
-        19: "max_consumption"
+        19: "max_consumption",
+        20: "Holiday_mode"
     }
 
     debug = {
@@ -194,7 +203,9 @@ else:
         36: "Total water consumption yesterday: {}",
         37: "Offset for todays waterconsumption: {}",
         38: "Last run of script: {}",
-        39: "Init successful!"
+        39: "Init successful!",
+        40: "Holidaymode has been deactivated successfully"
+
     }
 
 

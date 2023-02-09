@@ -93,7 +93,7 @@ main_app:
 
 -> the getjudo.py can be also started from a local Win10 VSCode installation, for easier tests of the config (after adding python through extensions and paho-mqtt with pip install)
 
-###  !!!!Attention!!!! Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!
+
 
 ### Startup
 Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
@@ -143,7 +143,8 @@ data:
 
 
 
-
+###  !!!!Attention!!!! 
+**Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!**
 
 
 
@@ -151,7 +152,7 @@ data:
 - https://blog.muwave.de/2017/06/monitoring-and-controlling-a-judo-i-soft-plus-water-softening-device-via-lan/
 - https://forum.fhem.de/index.php/topic,115696.15.html
 - https://knx-user-forum.de/forum/projektforen/edomi/1453632-lbs19002090-judo-i-soft-wasserenth%C3%A4rtungsanlage/page2
-- https://github.com/arteck/iobroker.judoisoft/blob/master/lib/dataConverter.js
+- https://myjudo.eu (Javascript-Files)
 
 Many thanks to this guys!!!
 
