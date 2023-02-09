@@ -34,7 +34,14 @@ $sudo pip install paho-mqtt
 ```
 After that you can start the script. On Linux platforms it is best to include it in the systemd-manager:
 
-Copy/Clone the getjudo.py and the config_getjudo.py to your home-folder or wherever you want. Then create a new systemd-service:
+Copy/Clone the repo to your home-folder or wherever you want. Rename the config_getjudo_default.py and the temp_getjudo_default.pkl
+```
+mv config_getjudo_default.py config_getjudo.py && mv temp_getjudo_default.pkl temp_getjudo.pkl
+```
+
+Do the settings in config_getjudo.py , see @ Chapter "Config"
+
+Then create a new systemd-service:
 ```
 $sudo nano /etc/systemd/system/getjudo.service
 ```
@@ -78,7 +85,7 @@ python_packages:
 system_packages:
 ```
 
-3. Copy all files from the python folder into the folder appdaemon/apps/main (inkl. temp_getjudo.pkl file) -> Studio Code Server
+3. Copy all files from the python folder into the folder appdaemon/apps/main (inkl. temp_getjudo_default.pkl file) -> Studio Code Server . Rename config_getjudo_default.py to config_getjudo.py & the temp_getjudo_default.pkl to temp_getjudo.pkl
 4. Modify the apps.yaml file:
 
 ```
