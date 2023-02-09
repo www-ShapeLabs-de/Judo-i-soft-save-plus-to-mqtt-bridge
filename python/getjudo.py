@@ -1,4 +1,4 @@
-#!/urs/bin/python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import urllib3
 import json
