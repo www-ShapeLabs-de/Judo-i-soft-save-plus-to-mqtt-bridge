@@ -345,7 +345,7 @@ def main():
         #print("GET error messages from Cloud-Service...")
         error_response = http.request('GET',f"https://myjudo.eu/interface/?token={my_token}&group=register&command=get%20error%20messages")
         error_response_json = json.loads(error_response.data)
-        if error_response_json["data"] != [] && error_response_json["count"] != 0:
+        if error_response_json["data"] != [] and error_response_json["count"] != 0:
             if last_err_id != error_response_json["data"][0]["id"]:
                 last_err_id = error_response_json["data"][0]["id"]
 
