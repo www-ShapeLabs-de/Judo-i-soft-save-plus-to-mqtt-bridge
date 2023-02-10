@@ -1,4 +1,4 @@
-#!/urs/bin/python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 #Judo Config
@@ -33,6 +33,6 @@ LIMIT_MAX_WATERFLOW = 3000          #can setup to max 5000L/h
 LIMIT_EXTRACTION_QUANTITY = 500     #can setup to max 3000L
 
 APPDAEMON = True                    #'True' , if running in Appdaemon docker directly in HA, on generic Linux platform set flag to 'False'
-# for Appdaemon the whole path is required "/config/appdaemon/apps/temp_getjudo.pkl", otherwise "temp_getjudo.pkl"
-TEMP_FILE = "/config/appdaemon/apps/temp_getjudo.pkl"
+# for Appdaemon the whole path is required "/config/appdaemon/apps/main/temp_getjudo.pkl", otherwise "temp_getjudo.pkl"
+TEMP_FILE = "/config/appdaemon/apps/main/temp_getjudo.pkl"
 #TEMP_FILE = "temp_getjudo.pkl"

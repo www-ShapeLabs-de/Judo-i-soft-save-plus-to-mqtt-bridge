@@ -1,9 +1,10 @@
-#!/urs/bin/python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import urllib3
 import json
 import time
 import gc
+import os
 import sys
 import config_getjudo
 import messages_getjudo
@@ -70,7 +71,8 @@ class entity():
             entity_config["unit_of_measurement"] = self.unit
 
         elif self.entity_type == "select":
-            entity_config["command_template"] = "{\"" + self.name + "\": {{ value }}}"
+            entity_config["command_topic"] = command_topic
+            entity_config["command_template"] = "{\"" + self.name + "\": \"{{ value }}\"}"
             entity_config["options"] = self.unit
 
         else:
@@ -142,37 +144,41 @@ def on_connect(client, userdata, flags, rc):
 #Callback
 def on_message(client, userdata, message):
     print(messages_getjudo.debug[5].format(message.topic, message.payload))
-    command_json = json.loads(message.payload)
-    
-    if output_hardness.name in command_json:
-        set_value(output_hardness, 60, command_json[output_hardness.name], 8)
+    try:
+        command_json = json.loads(message.payload)
+        
+        if output_hardness.name in command_json:
+            set_value(output_hardness, 60, command_json[output_hardness.name], 8)
 
-    elif salt_stock.name in command_json:
-        set_value(salt_stock, 94,command_json[salt_stock.name]*1000, 16)
-    
-    elif water_lock.name in command_json:
-        set_water_lock(command_json[water_lock.name])
+        elif salt_stock.name in command_json:
+            set_value(salt_stock, 94,command_json[salt_stock.name]*1000, 16)
+        
+        elif water_lock.name in command_json:
+            set_water_lock(command_json[water_lock.name])
 
-    elif regeneration_start.name in command_json:
-        start_regeneration()
+        elif regeneration_start.name in command_json:
+            start_regeneration()
 
-    elif sleepmode.name in command_json:
-        set_sleepmode(command_json[sleepmode.name])
+        elif sleepmode.name in command_json:
+            set_sleepmode(command_json[sleepmode.name])
 
-    elif max_waterflow.name in command_json:
-        set_value(max_waterflow, 75, command_json[max_waterflow.name], 16)
+        elif max_waterflow.name in command_json:
+            set_value(max_waterflow, 75, command_json[max_waterflow.name], 16)
 
-    elif extraction_time.name in command_json:
-        set_value(extraction_time, 74, command_json[extraction_time.name], 16)
+        elif extraction_time.name in command_json:
+            set_value(extraction_time, 74, command_json[extraction_time.name], 16)
 
-    elif extraction_quantity.name in command_json:
-        set_value(extraction_quantity, 76, command_json[extraction_quantity.name], 16)
+        elif extraction_quantity.name in command_json:
+            set_value(extraction_quantity, 76, command_json[extraction_quantity.name], 16)
 
-    elif holidaymode.name in command_json:
-        set_holidaymode(command_json[holidaymode.name])
+        elif holidaymode.name in command_json:
+            set_holidaymode(command_json[holidaymode.name])
 
-    else:
-        print(messages_getjudo.debug[6])
+        else:
+            print(messages_getjudo.debug[6])
+    except Exception as e:
+        notify.publish([messages_getjudo.debug[27].format(sys.exc_info()[-1].tb_lineno),e], 3)
+
 
 
 def publish_json(client, topic, message):
@@ -201,16 +207,15 @@ def set_sleepmode(hours):
 
 
 def set_holidaymode(mode):
-    if mode == messages_gejudo.holiday_options[1]:      #lock
-        send_command("73", "9")
-    elif mode == messages_gejudo.holiday_options[2]:    #mode1
+    if mode == messages_getjudo.holiday_options[1]:      #lock
+        send_command("77", "9")
+    elif mode == messages_getjudo.holiday_options[2]:    #mode1
         send_command("77", "3")
-    elif mode == messages_gejudo.holiday_options[3]:    #mode2
+    elif mode == messages_getjudo.holiday_options[3]:    #mode2
         send_command("77", "5")
     else:                                               #off
         if send_command("73", ""):
             notify.publish(messages_getjudo.debug[40], 1)
-        send_command("77", "0")
 
 
 def start_regeneration():
@@ -324,9 +329,13 @@ try:
     print (messages_getjudo.debug[38].format(day_today))
 except Exception as e:
     notify.publish([messages_getjudo.debug[29].format(sys.exc_info()[-1].tb_lineno),e], 3)
-
-notify.publish(messages_getjudo.debug[39], 2)
-
+    try:
+        with open(config_getjudo.TEMP_FILE,"wb") as temp_file:
+            pickle.dump([last_err_id, offset_total_water, water_yesterday.value, day_today], temp_file)
+        notify.publish(messages_getjudo.debug[41], 3)
+    except:
+        notify.publish([messages_getjudo.debug[42].format(sys.exc_info()[-1].tb_lineno),e], 3)
+        sys.exit()
 
 #----- MAIN Program ---- 
 def main():
@@ -336,16 +345,19 @@ def main():
         #print("GET error messages from Cloud-Service...")
         error_response = http.request('GET',f"https://myjudo.eu/interface/?token={my_token}&group=register&command=get%20error%20messages")
         error_response_json = json.loads(error_response.data)
-        
-        if last_err_id != error_response_json["data"][0]["id"]:
-            last_err_id = error_response_json["data"][0]["id"]
+        if error_response_json["data"] != [] && error_response_json["count"] != 0:
+            if last_err_id != error_response_json["data"][0]["id"]:
+                last_err_id = error_response_json["data"][0]["id"]
 
-            if error_response_json["data"][0]["type"] == "w":
-                error_message = messages_getjudo.warnings[error_response_json["data"][0]["error"]]
-                notify.publish(error_message, 1)
-            elif error_response_json["data"][0]["type"] == "e":
-                error_message = messages_getjudo.errors[error_response_json["data"][0]["error"]]
-                notify.publish(error_message, 1)
+                timestamp = error_response_json["data"][0]["ts_sort"]
+                timestamp = timestamp[:-7] + ": "
+
+                if error_response_json["data"][0]["type"] == "w":
+                    error_message = timestamp + messages_getjudo.warnings[error_response_json["data"][0]["error"]]
+                    notify.publish(error_message, 1)
+                elif error_response_json["data"][0]["type"] == "e":
+                    error_message = timestamp + messages_getjudo.errors[error_response_json["data"][0]["error"]]
+                    notify.publish(error_message, 1)
     except Exception as e:
         notify.publish([messages_getjudo.debug[30].format(sys.exc_info()[-1].tb_lineno),e], 3)
         return 0

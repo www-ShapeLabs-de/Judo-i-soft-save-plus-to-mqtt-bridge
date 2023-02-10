@@ -1,8 +1,7 @@
----
 main_app:
   module: main_entity
   class: main_loop
 
-#hello_world:
-#  module: hello
-#  class: HelloWorld
+hello_world:
+  module: hello
+  class: HelloWorld

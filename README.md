@@ -32,16 +32,15 @@ It may still be necessary to install the paho-mqtt package:
 ```
 $sudo pip install paho-mqtt
 ```
-After that you can start the script. On Linux platforms it is best to include it in the systemd-manager:
 
-Copy/Clone the repo to your home-folder or wherever you want. Rename the config_getjudo_default.py and the temp_getjudo_default.pkl
+Copy/Clone the repo to your home-folder or wherever you want. Rename the config_getjudo_default.py 
 ```
-mv config_getjudo_default.py config_getjudo.py && mv temp_getjudo_default.pkl temp_getjudo.pkl
+mv config_getjudo_default.py config_getjudo.py
 ```
 
 Do the settings in config_getjudo.py , see @ Chapter "Config"
-
-Then create a new systemd-service:
+After that you can start the script. On Linux platforms it is best to include it in the systemd-manager.
+To do this, create a new systemd-service:
 ```
 $sudo nano /etc/systemd/system/getjudo.service
 ```
@@ -74,7 +73,7 @@ $sudo systemctl start getjudo.service
 ```
 
 
-### Running in AppDeamon docker directly in HomeAssistant
+### Running in AppDeamon docker directly in HomeAssistant (experimental; work in progress)
 0. MQTT should be already setup and running
 1. Install AppDaemon and Studio Code Server (Optional) through HomeAssistant Add-Ons store (https://community.home-assistant.io/t/home-assistant-community-add-on-appdaemon-4/163259)
 2. Configure AppDaemon with the following settings:
@@ -85,7 +84,7 @@ python_packages:
 system_packages:
 ```
 
-3. Copy all files from the python folder into the folder appdaemon/apps/main (inkl. temp_getjudo_default.pkl file) -> Studio Code Server . Rename config_getjudo_default.py to config_getjudo.py & the temp_getjudo_default.pkl to temp_getjudo.pkl
+3. Copy all files from the python folder into the folder appdaemon/apps/main -> Studio Code Server . Rename config_getjudo_default.py to config_getjudo.py 
 4. Modify the apps.yaml file:
 
 ```

@@ -1,8 +1,7 @@
-#!/urs/bin/python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-#import config_getjudo
-import config_getjudo							#Developer's config-file Path...
+import config_getjudo
 
 #DE
 if config_getjudo.LANGUAGE == "DE":
@@ -73,7 +72,10 @@ if config_getjudo.LANGUAGE == "DE":
         37: "Offset für heutigen Wasserverbrauch: {}",
         38: "Letzte Ausführung des Scripts: {}",
         39: "Initialisierung erfolgreich!",
-        40: "Urlaubsmodus wurde erfolgreich deaktiviert"
+        40: "Urlaubsmodus wurde erfolgreich deaktiviert",
+        41: "Tempfile scheinbar korrupt oder nicht vorhanden, Schreibe neu",
+        42: "Beende Script. Schwerwiegender Fehler in Zeile: {}"
+
     }
 
     warnings = {
@@ -204,8 +206,9 @@ else:
         37: "Offset for todays waterconsumption: {}",
         38: "Last run of script: {}",
         39: "Init successful!",
-        40: "Holidaymode has been deactivated successfully"
-
+        40: "Holidaymode has been deactivated successfully",
+        41: "Temp-file seems to be currupt or not existent, writing a new one",
+        42: "Canceling Script, Fatal Error on line: {}"
     }
 
 
