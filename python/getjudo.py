@@ -216,6 +216,7 @@ def set_holidaymode(mode):
     else:                                               #off
         if send_command("73", ""):
             notify.publish(messages_getjudo.debug[40], 1)
+        send_command("77", "0")
 
 
 def start_regeneration():
