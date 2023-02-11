@@ -84,7 +84,7 @@ python_packages:
 system_packages:
 ```
 
-3. Copy all files from the python folder into the folder appdaemon/apps/main -> Studio Code Server . Rename config_getjudo_default.py to config_getjudo.py 
+3. Copy all files from the python folder into the folder appdaemon/apps/main (incl. temp_getjudo.py) -> Studio Code Server . Rename config_getjudo_default.py to config_getjudo.py 
 4. Modify the apps.yaml file:
 
 ```
@@ -128,6 +128,7 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - max. extraction time, leakage protection config (input number slider)
   - max. extraction quantity, leakage protection config (input number slider)
   - max. waterflow, leakage protection config (input number slider)
+  - Holiday mode
 - other:
   - Error- and warning messages of plant published to notification topic (LOCATION/NAME/notify). Can be used for hassio telegram bot:
 
