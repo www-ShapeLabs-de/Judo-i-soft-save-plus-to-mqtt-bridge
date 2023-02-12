@@ -232,7 +232,7 @@ def set_value(obj, index, value, length):
 
 def send_command(index, data):
     try:
-        cmd_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={mydata[token]}&group=register&command=write%20data&serial_number={mydata.serial}&dt={mydata.dt}&index={index}&data={data}&da={mydata.da}&role=customer")
+        cmd_response = http.request('GET', f"https://www.myjudo.eu/interface/?token={mydata.token}&group=register&command=write%20data&serial_number={mydata.serial}&dt={mydata.dt}&index={index}&data={data}&da={mydata.da}&role=customer")
         cmd_response_json = json.loads(cmd_response.data)
         if "status" in cmd_response_json:
             if cmd_response_json["status"] == "ok":
@@ -358,7 +358,7 @@ if mydata.token == 0:
 
 
 #----- MAIN Program ----
-def main():
+def main(kwargs):
     global mydata
 
     try:
@@ -474,9 +474,9 @@ def main():
 
 #----- MAIN LOOP END ----
 
-if config_getjudo.APPDAEMON == False:
+if config_getjudo.RUN_IN_APPDAEMON == False:
     while True:
-        if main() == 1:
+        if main(20) == 1:
             notify.counter = 0
         else:
             notify.counter += 1
