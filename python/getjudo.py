@@ -12,8 +12,7 @@ import hashlib
 from paho.mqtt import client as mqtt
 from datetime import date
 import pickle
-from dataclasses import dataclass
-
+from threading import Timer
 
 class entity():
     def __init__(self, name, icon, entity_type, unit = "", minimum = 1, maximum = 100, step = 1, value = 0):
@@ -358,7 +357,7 @@ if mydata.token == 0:
 
 
 #----- MAIN Program ----
-def main(kwargs):
+def main():
     global mydata
 
     try:
@@ -430,17 +429,16 @@ def main(kwargs):
             if response_json["data"] == "login failed":
                 notify.publish(messages_getjudo.debug[23],3)
                 mydata.token = judo_login(config_getjudo.JUDO_USER, config_getjudo.JUDO_PASSWORD)
-                return 0
             else:
                 val = response_json["data"]
                 notify.publish(messages_getjudo.debug[24].format(val),3)
-                return 0
+                notify.counter += 1
         else:
             print(messages_getjudo.debug[25])
-            return 0
+            notify.counter += 1
     except Exception as e:
         notify.publish([messages_getjudo.debug[31].format(sys.exc_info()[-1].tb_lineno),e],3)
-        return 0
+        notify.counter += 1
 
     try:
         #print("GET error messages from Cloud-Service...")
@@ -461,28 +459,23 @@ def main(kwargs):
                     notify.publish(error_message, 1)
     except Exception as e:
         notify.publish([messages_getjudo.debug[30].format(sys.exc_info()[-1].tb_lineno),e], 3)
-        return 0
+        notify.counter += 1
 
     try:
         with open(config_getjudo.TEMP_FILE,"wb") as temp_file:
             pickle.dump(mydata, temp_file)
     except Exception as e:
         notify.publish([messages_getjudo.debug[29].format(sys.exc_info()[-1].tb_lineno),e], 3)
-        return 0
+        notify.counter += 1
 
-    return 1
+    if notify.counter >= config_getjudo.MAX_RETRIES:
+        notify.publish(messages_getjudo.debug[32].format(config_getjudo.MAX_RETRIES),1)
+        sys.exit()
+    else:
+        notify.counter = 0
+        #print("mainthread run")
+        mainthread = Timer(config_getjudo.STATE_UPDATE_INTERVAL, main).start()
+
 
 #----- MAIN LOOP END ----
-
-if config_getjudo.RUN_IN_APPDAEMON == False:
-    while True:
-        if main(20) == 1:
-            notify.counter = 0
-        else:
-            notify.counter += 1
-        if notify.counter >= config_getjudo.MAX_RETRIES:
-            notify.publish(messages_getjudo.debug[32].format(config_getjudo.MAX_RETRIES),1)
-            break
-        if mydata.token == False:
-            break
-        time.sleep(config_getjudo.STATE_UPDATE_INTERVAL)
+main()
