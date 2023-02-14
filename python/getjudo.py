@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import urllib3
 import json
-import time
+#import time
 import gc
 import os
 import sys
@@ -87,7 +87,6 @@ class entity():
         if val != "":
             self.value = int.from_bytes(bytes.fromhex(val[a:b]), byteorder='little')
 
-
 class notification_entity():
     def __init__(self, name, icon, counter=0, value = ""):
         self.name = name
@@ -122,6 +121,21 @@ class notification_entity():
         print(msg)
         if config_getjudo.MQTT_DEBUG_LEVEL  >= debuglevel:
             client.publish(notification_topic, msg, qos=0, retain=True)
+
+class Function_Caller(Timer):
+    def run(self):
+        while not self.finished.wait(self.interval):  
+            self.function()
+
+class savedata:
+    day_today = 0
+    offset_total_water = 0
+    last_err_id = 0
+    token = 0
+    water_yesterday = 0
+    da = 0
+    dt = 0
+    serial = 0
 
 
 def on_connect(client, userdata, flags, rc):
@@ -276,6 +290,7 @@ notification_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/notify"
 client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 
 http = urllib3.PoolManager()
+mydata = savedata()
 
 next_revision = entity(messages_getjudo.entities[0], "mdi:account-wrench", "sensor", "Tagen")
 total_water = entity(messages_getjudo.entities[1], "mdi:water-circle", "total_increasing", "m³")
@@ -299,7 +314,6 @@ water_today = entity(messages_getjudo.entities[14], "mdi:chart-box", "sensor", "
 water_yesterday = entity(messages_getjudo.entities[15], "mdi:chart-box-outline", "sensor", "L")
 notify = notification_entity(messages_getjudo.entities[16], "mdi:alert-outline")
 
-
 try: 
     client = mqtt.Client()
     client.on_connect = on_connect
@@ -311,19 +325,6 @@ try:
     client.loop_start()
 except Exception as e:
     sys.exit(messages_getjudo.debug[33])
-
-
-class savedata:
-    day_today = 0
-    offset_total_water = 0
-    last_err_id = 0
-    token = 0
-    water_yesterday = 0
-    da = 0
-    dt = 0
-    serial = 0
-
-mydata = savedata()
 
 
 #Load stored variables:
@@ -356,12 +357,9 @@ if mydata.token == 0:
     mydata.token = judo_login(config_getjudo.JUDO_USER, config_getjudo.JUDO_PASSWORD)
 
 
-#----- MAIN Program ----
+#----- Mainthread ----
 def main():
-    global mydata
-
     try:
-        #print("GET device data from Cloud-Service...")
         response = http.request('GET',f"https://www.myjudo.eu/interface/?token={mydata.token}&group=register&command=get%20device%20data")
         response_json = json.loads(response.data)
         if response_json["status"] ==  "ok":
@@ -441,7 +439,6 @@ def main():
         notify.counter += 1
 
     try:
-        #print("GET error messages from Cloud-Service...")
         error_response = http.request('GET',f"https://myjudo.eu/interface/?token={mydata.token}&group=register&command=get%20error%20messages")
         error_response_json = json.loads(error_response.data)
         if error_response_json["data"] != [] and error_response_json["count"] != 0:
@@ -473,9 +470,8 @@ def main():
         sys.exit()
     else:
         notify.counter = 0
-        #print("mainthread run")
-        mainthread = Timer(config_getjudo.STATE_UPDATE_INTERVAL, main).start()
+#---------------------
 
 
-#----- MAIN LOOP END ----
-main()
+Function_Caller(config_getjudo.STATE_UPDATE_INTERVAL, main).start()
+
