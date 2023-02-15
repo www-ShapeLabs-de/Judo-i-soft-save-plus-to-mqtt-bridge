@@ -1,9 +1,5 @@
 # Judo i-soft save+ to mqtt bridge for homeassistant
-
-<div class="pull-right">
-	![Judo I-Soft SAVE+](isoftsaveplus.jpg)
-</div>
-
+<img align="right" height="400" src="isoftsaveplus.jpg">
 This is a small workarount to read and control the Judo isoft safe+ water softener with homeassisant (hassio). It is the version with the small character-lcd and leakage protection.
 
 Unfortunately it is not possible to communicate directly with this version of the plant. Port 8000 and port 8124, through which the system can be read out on the Judo isoft-plus, are closed. The only way to access settings and data is via the cloud server.
