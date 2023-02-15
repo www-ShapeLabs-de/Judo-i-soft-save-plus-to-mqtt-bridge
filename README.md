@@ -1,6 +1,8 @@
 # Judo i-soft save+ to mqtt bridge for homeassistant
 
-
+<div class="pull-right">
+	![Judo I-Soft SAVE+](isoftsaveplus.jpg)
+</div>
 
 This is a small workarount to read and control the Judo isoft safe+ water softener with homeassisant (hassio). It is the version with the small character-lcd and leakage protection.
 
