@@ -13,6 +13,7 @@ from paho.mqtt import client as mqtt
 from datetime import date
 import pickle
 from threading import Timer
+from dataclasses import dataclass
 
 class entity():
     def __init__(self, name, icon, entity_type, unit = "", minimum = 1, maximum = 100, step = 1, value = 0):
@@ -127,6 +128,7 @@ class Function_Caller(Timer):
         while not self.finished.wait(self.interval):  
             self.function()
 
+@dataclass
 class savedata:
     day_today = 0
     offset_total_water = 0
