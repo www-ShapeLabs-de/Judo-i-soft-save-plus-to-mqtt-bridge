@@ -414,7 +414,7 @@ def main():
                 mydata.day_today = today.day
                 mydata.offset_total_water = int(1000*total_water.value)
                 water_yesterday.value = water_today.value
-                #mydata.water_yesterday = water_yesterday.val
+                mydata.water_yesterday = water_today.value
             water_today.value = int(1000*total_water.value) - mydata.offset_total_water
 
             #print("Publishing parsed values over MQTT....")
@@ -476,4 +476,6 @@ def main():
 
 
 Function_Caller(config_getjudo.STATE_UPDATE_INTERVAL, main).start()
+
+notify.publish(messages_getjudo.debug[39], 2)   #Init Complete
 

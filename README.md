@@ -3,20 +3,19 @@
 This is a small workarount to read and control the Judo isoft safe+ water softener with homeassisant (hassio). It is the version with the small character-lcd and leakage protection.
 
 Unfortunately it is not possible to communicate directly with this version of the plant. Port 8000 and port 8124, through which the system can be read out on the Judo isoft-plus, are closed. The only way to access settings and data is via the cloud server.
+To do this, you must register the system for the cloud service as described in the user manual and create a user account. There is also a judo smartphone app for this, but it is of course nicer to have everything in homeassisant :-)
 
 Notice:
 There are 2 versions of the system, which sound very similar.
 - i-soft safe+ (small display, leakage protection) --->This repo
 - i-soft plus (large graphic display) ---> another tutorials, like this: https://blog.muwave.de/2017/06/monitoring-and-controlling-a-judo-i-soft-plus-water-softening-device-via-lan/
 
-To do this, you must register the system for the cloud service as described in the user manual and create a user account. There is also a judo smartphone app for this, but it is of course nicer to have everything in homeassisant :-)
-
 ## Config:
 General settings must be made in the config file. 
  - First there are the access data to the myjudo.eu server.
  - Furthermore there are the MQTT broker settings. The IP of the MQTT broker must be specified here, as well as the access data to the broker.
 - General settings like location and name should also be defined. This results in the MQTT topic
-- In addition, the language can be set between German and English, as well as the MQTT debug level. As default user the value "1" is recommended.
+- In addition, the language can be set between German and English, as well as the MQTT debug level. As default user the value "1" or "2" is recommended.
 - At last you have to set in the script in which environment it should run, see following instructions, there are two ways to run this script:
 
 ### Running on a generic Linux platform:
@@ -98,7 +97,6 @@ main_app:
 -> the getjudo.py can be also started from a local Win10 VSCode installation, for easier tests of the config (after adding python through extensions and paho-mqtt with pip install)
 
 
-
 ### Startup
 Afterwards the device should set itself up automatically with mqtt-autoconfig in homeassitant with all entities:
 
@@ -126,31 +124,30 @@ Afterwards the device should set itself up automatically with mqtt-autoconfig in
   - max. extraction time, leakage protection config (input number slider)
   - max. extraction quantity, leakage protection config (input number slider)
   - max. waterflow, leakage protection config (input number slider)
-  - Holiday mode
+  - holidaymode
 - other:
   - Error- and warning messages of plant published to notification topic (LOCATION/NAME/notify). Can be used for hassio telegram bot:
 
 
 ```
-#This is an example template, how to configure the notification as automation for Telegram-Bot
-
-#Trigger:
-platform: mqtt
-topic: Keller/Judo_isoftsaveplus/notify
-
-#Action:
-service: notify.ha_message
-data:
-  message: "Judo I-soft SAVE+: {{states(\"sensor.judo_isoftsaveplus_keller_meldung\")}}"
+alias: Notify Judo Isoft save plus
+description: "This is an example template, how to configure the notification as automation for Telegram-Bot"
+trigger:
+  - platform: mqtt
+    topic: Keller/Judo_isoftsaveplus/notify
+condition: []
+action:
+  - service: notify.ha_message
+    data:
+      message: >-
+        Judo I-soft SAVE+:
+        {{states("sensor.judo_isoftsaveplus_keller_meldung")}}
+mode: single
 ```
-
-
-
 
 
 ###  !!!!Attention!!!! 
 **Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!**
-
 
 
 ### This Project based of informations from:
@@ -159,5 +156,5 @@ data:
 - https://knx-user-forum.de/forum/projektforen/edomi/1453632-lbs19002090-judo-i-soft-wasserenth%C3%A4rtungsanlage/page2
 - https://myjudo.eu (Javascript-Files)
 
-Many thanks to this guys!!!
+Many thanks to this guys!!! & special thanks to [Daniel](https://github.com/danielegger1) who did the Appdeamon implementation and testing.
 

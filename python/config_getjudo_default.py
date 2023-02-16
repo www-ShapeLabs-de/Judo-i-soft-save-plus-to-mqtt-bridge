@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
+#-------------------------------------------------------------------------------
 #Judo Config
 JUDO_USER = "myjudousername"
 JUDO_PASSWORD = "myjudopassword"
@@ -32,6 +32,12 @@ LIMIT_EXTRACTION_TIME = 60          #can setup to max 600min
 LIMIT_MAX_WATERFLOW = 3000          #can setup to max 5000L/h 
 LIMIT_EXTRACTION_QUANTITY = 500     #can setup to max 3000L
 
+#The environment in which the script will run. Select "True" if you want to run it in the Appdeamon, or set "False" if you want to run the script on a generic Linux.
+RUN_IN_APPDEAMON = True
+#-------------------------------------------------------------------------------
+
 # for Appdaemon the whole path is required "/config/appdaemon/apps/main/temp_getjudo.pkl", otherwise "temp_getjudo.pkl"
-TEMP_FILE = "/config/appdaemon/apps/main/temp_getjudo.pkl"
-#TEMP_FILE = "temp_getjudo.pkl"
+if RUN_IN_APPDEAMON == True:
+    TEMP_FILE = "/config/appdaemon/apps/main/temp_getjudo.pkl"
+else:
+    TEMP_FILE = "temp_getjudo.pkl"
