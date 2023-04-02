@@ -49,6 +49,7 @@ class entity():
 
         if self.entity_type == "total_increasing":
             entity_config["device_class"] = "water"
+            entity_config["state_class"] = "total_increasing"
             entity_config["state_class"] = self.entity_type
             entity_config["unit_of_measurement"] = self.unit
             self.entity_type = "sensor"
@@ -121,7 +122,7 @@ class notification_entity():
         msg = str(self.value)
         print(msg)
         if config_getjudo.MQTT_DEBUG_LEVEL  >= debuglevel:
-            client.publish(notification_topic, msg, qos=0, retain=True)
+            client.publish(notification_topic, ssh msg, qos=0, retain=True)
 
 class Function_Caller(Timer):
     def run(self):
