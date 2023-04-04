@@ -74,7 +74,9 @@ if config_getjudo.LANGUAGE == "DE":
         39: "Initialisierung erfolgreich!",
         40: "Urlaubsmodus wurde erfolgreich deaktiviert",
         41: "Tempfile scheinbar korrupt oder nicht vorhanden, Schreibe neu",
-        42: "Beende Script. Schwerwiegender Fehler in Zeile: {}"
+        42: "Beende Script. Schwerwiegender Fehler in Zeile: {}",
+        43: "Errechneter Natriumgehalt: {}mg/L < {}mg/L bei {}°dH",
+        44: "Natriumgrenzwert würde überschritten werden. Wunschwasserhärte wird auf {} °dH gesetzt"
 
     }
 
@@ -208,7 +210,9 @@ else:
         39: "Init successful!",
         40: "Holidaymode has been deactivated successfully",
         41: "Temp-file seems to be currupt or not existent, writing a new one",
-        42: "Canceling Script, Fatal Error on line: {}"
+        42: "Canceling Script, Fatal Error on line: {}",
+        43: "Calculated sodium content: {}mg/L < {}mg/L at {}°dH",
+        44: "Sodium level would be exceeded. Desired hardness set to {} °dH"
     }
 
 

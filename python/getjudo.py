@@ -9,6 +9,7 @@ import sys
 import config_getjudo
 import messages_getjudo
 import hashlib
+import math
 from paho.mqtt import client as mqtt
 from datetime import date
 import pickle
@@ -122,7 +123,7 @@ class notification_entity():
         msg = str(self.value)
         print(msg)
         if config_getjudo.MQTT_DEBUG_LEVEL  >= debuglevel:
-            client.publish(notification_topic, ssh msg, qos=0, retain=True)
+            client.publish(notification_topic, msg, qos=0, retain=True)
 
 class Function_Caller(Timer):
     def run(self):
@@ -165,7 +166,18 @@ def on_message(client, userdata, message):
         command_json = json.loads(message.payload)
         
         if output_hardness.name in command_json:
-            set_value(output_hardness, 60, command_json[output_hardness.name], 8)
+            if config_getjudo.SODIUM_CHECK == True:
+                sodium = round(((input_hardness.value - command_json[output_hardness.name]) * 8.2) + config_getjudo.SODIUM_INPUT,1)
+                if  sodium < config_getjudo.SODIUM_LIMIT:
+                    if send_command(str(60), int_to_le_hex(command_json[output_hardness.name], 8)):
+                        notify.publish(messages_getjudo.debug[43].format(sodium, config_getjudo.SODIUM_LIMIT, command_json[output_hardness.name]), 2)
+                else:
+                    limited_hardness = input_hardness.value - ((config_getjudo.SODIUM_LIMIT - config_getjudo.SODIUM_INPUT)/8.2)
+                    limited_hardness = math.ceil(limited_hardness) #round up
+                    if send_command(str(60), int_to_le_hex(limited_hardness, 8)):
+                        notify.publish(messages_getjudo.debug[44].format(limited_hardness), 2)
+            else:
+                set_value(output_hardness, 60, command_json[output_hardness.name], 8)
 
         elif salt_stock.name in command_json:
             set_value(salt_stock, 94,command_json[salt_stock.name]*1000, 16)
@@ -195,7 +207,6 @@ def on_message(client, userdata, message):
             print(messages_getjudo.debug[6])
     except Exception as e:
         notify.publish([messages_getjudo.debug[27].format(sys.exc_info()[-1].tb_lineno),e], 3)
-
 
 
 def publish_json(client, topic, message):

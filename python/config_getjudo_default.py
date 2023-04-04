@@ -32,6 +32,10 @@ LIMIT_EXTRACTION_TIME = 60          #can setup to max 600min
 LIMIT_MAX_WATERFLOW = 3000          #can setup to max 5000L/h 
 LIMIT_EXTRACTION_QUANTITY = 500     #can setup to max 3000L
 
+USE_SODIUM_CHECK = True             #'True' activates the monitoring of the sodium limit when the water hardness is set
+SODIUM_INPUT = 30                   #Sodium level of input water [mg/L]. Ask your water provider or check providers webpage
+SODIUM_LIMIT = 200                  #Sodium limit value. Default 200mg/L (Germany)
+
 #The environment in which the script will run. Select "True" if you want to run it in the Appdeamon, or set "False" if you want to run the script on a generic Linux.
 RUN_IN_APPDEAMON = True
 #-------------------------------------------------------------------------------
