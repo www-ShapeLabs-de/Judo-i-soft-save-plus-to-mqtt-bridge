@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import urllib3
 import json
-#import time
+import time
 import gc
 import os
 import sys
@@ -140,6 +140,10 @@ class savedata:
     da = 0
     dt = 0
     serial = 0
+    reg_mean_time = 0
+    reg_mean_counter = 1
+    reg_last_val = 0
+    reg_last_timestamp = 0
 
 
 def on_connect(client, userdata, flags, rc):
@@ -327,6 +331,8 @@ holidaymode = entity(messages_getjudo.entities[20], "mdi:palm-tree", "select", m
 water_today = entity(messages_getjudo.entities[14], "mdi:chart-box", "sensor", "L")
 water_yesterday = entity(messages_getjudo.entities[15], "mdi:chart-box-outline", "sensor", "L")
 notify = notification_entity(messages_getjudo.entities[16], "mdi:alert-outline")
+h_since_last_reg = entity(messages_getjudo.entities[21], "mdi:account-wrench", "sensor", "h")
+avg_reg_interval = entity(messages_getjudo.entities[22], "mdi:account-wrench", "sensor", "h")
 
 try: 
     client = mqtt.Client()
@@ -356,6 +362,10 @@ try:
     print ("dt: {}".format(mydata.dt))
     print ("serial: {}".format(mydata.serial))
     print ("token: {}".format(mydata.token))
+    print ("avergage regeneration interval: {}h".format(mydata.reg_mean_time))
+    print ("counter for avg-calc: {}".format(mydata.reg_mean_counter))
+    print ("last regenerations count: {}".format(mydata.reg_last_val))
+    print ("timestamp of last regeneration: {}s".format(mydata.reg_last_timestamp))
 
 except Exception as e:
     notify.publish([messages_getjudo.debug[29].format(sys.exc_info()[-1].tb_lineno),e], 3)
@@ -369,6 +379,9 @@ except Exception as e:
 
 if mydata.token == 0:
     mydata.token = judo_login(config_getjudo.JUDO_USER, config_getjudo.JUDO_PASSWORD)
+
+
+avg_reg_interval.value = mydata.reg_mean_time
 
 
 #----- Mainthread ----
@@ -428,6 +441,22 @@ def main():
                 water_yesterday.value = water_today.value
                 mydata.water_yesterday = water_today.value
             water_today.value = int(1000*total_water.value) - mydata.offset_total_water
+
+            #Hours since last regeneration / Average regeneration interval
+            if regenerations.value > mydata.reg_last_val:
+                if (regenerations.value - mydata.reg_last_val) == 1: #Regeneration has started, 
+                    h_since_last_reg.value = int((int(time.time()) - mydata.reg_last_timestamp)/3600)
+                    avg_reg_interval.value = int(((mydata.reg_mean_counter-1)*mydata.reg_mean_time + h_since_last_reg.value)/mydata.reg_mean_counter)
+                    mydata.reg_mean_time = avg_reg_interval.value
+                    mydata.reg_mean_counter += 1
+                    mydata.reg_last_timestamp = int(time.time()) 
+                    mydata.reg_last_val = regenerations.value
+                else:
+                    mydata.reg_last_val = regenerations.value
+
+            if mydata.reg_last_timestamp != 0:
+                h_since_last_reg.value = int((int(time.time()) - mydata.reg_last_timestamp)/3600)
+
 
             #print("Publishing parsed values over MQTT....")
             outp_val_dict = {}
