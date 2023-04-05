@@ -320,7 +320,7 @@ output_hardness = entity(messages_getjudo.entities[6], "mdi:water-minus", "numbe
 input_hardness = entity(messages_getjudo.entities[7], "mdi:water-plus", "sensor", "°dH")
 water_flow = entity(messages_getjudo.entities[8], "mdi:waves-arrow-right", "sensor", "L/h")
 batt_capacity = entity(messages_getjudo.entities[9], "mdi:battery-50", "sensor", "%")
-regenerations = entity(messages_getjudo.entities[10], "mdi:recycle-variant", "sensor")
+regenerations = entity(messages_getjudo.entities[10], "mdi:water-sync", "sensor")
 water_lock = entity(messages_getjudo.entities[11], "mdi:pipe-valve", "switch")
 regeneration_start = entity(messages_getjudo.entities[12], "mdi:recycle-variant", "switch")
 sleepmode = entity(messages_getjudo.entities[13], "mdi:pause-octagon", "number", "h", 0, 10)
@@ -331,8 +331,8 @@ holidaymode = entity(messages_getjudo.entities[20], "mdi:palm-tree", "select", m
 water_today = entity(messages_getjudo.entities[14], "mdi:chart-box", "sensor", "L")
 water_yesterday = entity(messages_getjudo.entities[15], "mdi:chart-box-outline", "sensor", "L")
 notify = notification_entity(messages_getjudo.entities[16], "mdi:alert-outline")
-h_since_last_reg = entity(messages_getjudo.entities[21], "mdi:account-wrench", "sensor", "h")
-avg_reg_interval = entity(messages_getjudo.entities[22], "mdi:account-wrench", "sensor", "h")
+h_since_last_reg = entity(messages_getjudo.entities[21], "mdi:water-sync", "sensor", "h")
+avg_reg_interval = entity(messages_getjudo.entities[22], "mdi:water-sync", "sensor", "h")
 
 try: 
     client = mqtt.Client()

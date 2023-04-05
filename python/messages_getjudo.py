@@ -30,8 +30,8 @@ if config_getjudo.LANGUAGE == "DE":
         18 : "max_Wasserdurchfluss",
         19 : "max_Entnahmemenge",
         20 : "Urlaubsmodus",
-        21 : "Stunden seit letzter Regeneration",
-        22 : "durchschn. Regenerationsintervall"
+        21 : "Stunden_seit_letzter_Regeneration",
+        22 : "durchschn_Regenerationsintervall"
     }
 
     debug = {
@@ -168,8 +168,8 @@ else:
         18: "max_volumetric_flow_rate",
         19: "max_consumption",
         20: "Holiday_mode",
-        21 : "Hours since last regeneration",
-        22 : "Avg. regeneration interval"
+        21 : "Hours_since_last_regeneration",
+        22 : "Avg_regeneration_interval"
     }
 
     debug = {
