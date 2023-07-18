@@ -144,6 +144,8 @@ class savedata:
     reg_mean_counter = 1
     reg_last_val = 0
     reg_last_timestamp = 0
+    total_softwater_at_reg = 0
+    total_hardwater_at_reg = 0
 
 
 def on_connect(client, userdata, flags, rc):
@@ -170,7 +172,7 @@ def on_message(client, userdata, message):
         command_json = json.loads(message.payload)
         
         if output_hardness.name in command_json:
-            if config_getjudo.SODIUM_CHECK == True:
+            if config_getjudo.USE_SODIUM_CHECK == True:
                 sodium = round(((input_hardness.value - command_json[output_hardness.name]) * 8.2) + config_getjudo.SODIUM_INPUT,1)
                 if  sodium < config_getjudo.SODIUM_LIMIT:
                     if send_command(str(60), int_to_le_hex(command_json[output_hardness.name], 8)):
@@ -182,33 +184,33 @@ def on_message(client, userdata, message):
                         notify.publish(messages_getjudo.debug[44].format(limited_hardness), 2)
             else:
                 set_value(output_hardness, 60, command_json[output_hardness.name], 8)
-
-        elif salt_stock.name in command_json:
-            set_value(salt_stock, 94,command_json[salt_stock.name]*1000, 16)
-        
-        elif water_lock.name in command_json:
-            set_water_lock(command_json[water_lock.name])
-
         elif regeneration_start.name in command_json:
-            start_regeneration()
+                start_regeneration()
 
-        elif sleepmode.name in command_json:
-            set_sleepmode(command_json[sleepmode.name])
 
-        elif max_waterflow.name in command_json:
-            set_value(max_waterflow, 75, command_json[max_waterflow.name], 16)
+        if config_getjudo.USE_WITH_SOFTWELL_P == False:
+            if salt_stock.name in command_json:
+                set_value(salt_stock, 94,command_json[salt_stock.name]*1000, 16)
+            
+            elif water_lock.name in command_json:
+                set_water_lock(command_json[water_lock.name])
 
-        elif extraction_time.name in command_json:
-            set_value(extraction_time, 74, command_json[extraction_time.name], 16)
 
-        elif extraction_quantity.name in command_json:
-            set_value(extraction_quantity, 76, command_json[extraction_quantity.name], 16)
+            elif sleepmode.name in command_json:
+                set_sleepmode(command_json[sleepmode.name])
 
-        elif holidaymode.name in command_json:
-            set_holidaymode(command_json[holidaymode.name])
+            elif max_waterflow.name in command_json:
+                set_value(max_waterflow, 75, command_json[max_waterflow.name], 16)
 
-        else:
-            print(messages_getjudo.debug[6])
+            elif extraction_time.name in command_json:
+                set_value(extraction_time, 74, command_json[extraction_time.name], 16)
+
+            elif extraction_quantity.name in command_json:
+                set_value(extraction_quantity, 76, command_json[extraction_quantity.name], 16)
+
+            elif holidaymode.name in command_json:
+                set_holidaymode(command_json[holidaymode.name])
+
     except Exception as e:
         notify.publish([messages_getjudo.debug[27].format(sys.exc_info()[-1].tb_lineno),e], 3)
 
@@ -310,29 +312,35 @@ client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 http = urllib3.PoolManager()
 mydata = savedata()
 
+
+#Setting up all entities for homeassistant
 next_revision = entity(messages_getjudo.entities[0], "mdi:account-wrench", "sensor", "Tagen")
 total_water = entity(messages_getjudo.entities[1], "mdi:water-circle", "total_increasing", "m³")
-total_softwater_proportion = entity(messages_getjudo.entities[2], "mdi:water-outline", "total_increasing", "m³")
-total_hardwater_proportion = entity(messages_getjudo.entities[3], "mdi:water", "total_increasing", "m³")
-salt_stock = entity(messages_getjudo.entities[4], "mdi:gradient-vertical", "number", "kg", 1, 50)
-salt_range = entity(messages_getjudo.entities[5], "mdi:chevron-triple-right", "sensor", "Tage")
 output_hardness = entity(messages_getjudo.entities[6], "mdi:water-minus", "number", "°dH", 1, 15)
 input_hardness = entity(messages_getjudo.entities[7], "mdi:water-plus", "sensor", "°dH")
-water_flow = entity(messages_getjudo.entities[8], "mdi:waves-arrow-right", "sensor", "L/h")
-batt_capacity = entity(messages_getjudo.entities[9], "mdi:battery-50", "sensor", "%")
 regenerations = entity(messages_getjudo.entities[10], "mdi:water-sync", "sensor")
-water_lock = entity(messages_getjudo.entities[11], "mdi:pipe-valve", "switch")
 regeneration_start = entity(messages_getjudo.entities[12], "mdi:recycle-variant", "switch")
-sleepmode = entity(messages_getjudo.entities[13], "mdi:pause-octagon", "number", "h", 0, 10)
-extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, config_getjudo.LIMIT_EXTRACTION_TIME, 10)
-max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, config_getjudo.LIMIT_MAX_WATERFLOW, 500)
-extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, config_getjudo.LIMIT_EXTRACTION_QUANTITY, 100)
-holidaymode = entity(messages_getjudo.entities[20], "mdi:palm-tree", "select", messages_getjudo.holiday_options)
 water_today = entity(messages_getjudo.entities[14], "mdi:chart-box", "sensor", "L")
 water_yesterday = entity(messages_getjudo.entities[15], "mdi:chart-box-outline", "sensor", "L")
 notify = notification_entity(messages_getjudo.entities[16], "mdi:alert-outline")
 h_since_last_reg = entity(messages_getjudo.entities[21], "mdi:water-sync", "sensor", "h")
 avg_reg_interval = entity(messages_getjudo.entities[22], "mdi:water-sync", "sensor", "h")
+
+
+if config_getjudo.USE_WITH_SOFTWELL_P == False:
+    salt_stock = entity(messages_getjudo.entities[4], "mdi:gradient-vertical", "number", "kg", 1, 50)
+    salt_range = entity(messages_getjudo.entities[5], "mdi:chevron-triple-right", "sensor", "Tage")
+    total_softwater_proportion = entity(messages_getjudo.entities[2], "mdi:water-outline", "total_increasing", "m³")
+    total_hardwater_proportion = entity(messages_getjudo.entities[3], "mdi:water", "total_increasing", "m³")
+    water_flow = entity(messages_getjudo.entities[8], "mdi:waves-arrow-right", "sensor", "L/h")
+    batt_capacity = entity(messages_getjudo.entities[9], "mdi:battery-50", "sensor", "%")
+    water_lock = entity(messages_getjudo.entities[11], "mdi:pipe-valve", "switch")
+    sleepmode = entity(messages_getjudo.entities[13], "mdi:pause-octagon", "number", "h", 0, 10)
+    extraction_time = entity(messages_getjudo.entities[17], "mdi:clock-alert-outline", "number", "min", 10, config_getjudo.LIMIT_EXTRACTION_TIME, 10)
+    max_waterflow = entity(messages_getjudo.entities[18], "mdi:waves-arrow-up", "number", "L/h", 500, config_getjudo.LIMIT_MAX_WATERFLOW, 500)
+    extraction_quantity = entity(messages_getjudo.entities[19], "mdi:cup-water", "number", "L", 100, config_getjudo.LIMIT_EXTRACTION_QUANTITY, 100)
+    holidaymode = entity(messages_getjudo.entities[20], "mdi:palm-tree", "select", messages_getjudo.holiday_options)
+    mixratio = entity(messages_getjudo.entities[23], "mdi:tune-vertical", "sensor", "L")
 
 try: 
     client = mqtt.Client()
@@ -366,6 +374,9 @@ try:
     print ("counter for avg-calc: {}".format(mydata.reg_mean_counter))
     print ("last regenerations count: {}".format(mydata.reg_last_val))
     print ("timestamp of last regeneration: {}s".format(mydata.reg_last_timestamp))
+    if config_getjudo.USE_WITH_SOFTWELL_P == False:
+        print ("Softwater prop. since Regeneration: {}L".format(mydata.total_softwater_at_reg))
+        print ("Hardwater prop. since Regeneration: {}L".format(mydata.total_hardwater_at_reg))
 
 except Exception as e:
     notify.publish([messages_getjudo.debug[29].format(sys.exc_info()[-1].tb_lineno),e], 3)
@@ -396,42 +407,50 @@ def main():
             mydata.dt = response_json["data"][0]["data"][0]["dt"]
 
             next_revision.parse(response_json, 7, 0, 4)
-            total_water.parse(response_json, 8, 0, 8)
-            total_softwater_proportion.parse(response_json, 9, 0, 8)
-            salt_stock.parse(response_json,94, 0, 4)
-            salt_range.parse(response_json,94, 4, 8)
+            if config_getjudo.USE_WITH_SOFTWELL_P == False:
+                total_water.parse(response_json, 8, 0, 8)
+                salt_stock.parse(response_json,94, 0, 4)
+                salt_range.parse(response_json,94, 4, 8)
+                total_softwater_proportion.parse(response_json, 9, 0, 8)
+                water_flow.parse(response_json, 790, 34, 38)
+                batt_capacity.parse(response_json, 93, 6, 8)
+                water_lock.parse(response_json, 792, 2, 4)
+                sleepmode.parse(response_json,792, 20, 22)
+                max_waterflow.parse(response_json, 792, 26, 30)
+                extraction_quantity.parse(response_json, 792, 30, 34)
+                extraction_time.parse(response_json, 792, 34, 38)
+                holidaymode.parse(response_json,792, 38, 40)
+            else:
+                total_water.parse(response_json, 9, 0, 8)
+
             output_hardness.parse(response_json, 790, 18, 20)
             input_hardness.parse(response_json, 790, 54, 56)
-            water_flow.parse(response_json, 790, 34, 38)
             regenerations.parse(response_json, 791, 62, 66)
             regeneration_start.parse(response_json, 791, 2, 4)
-            batt_capacity.parse(response_json, 93, 6, 8)
-            water_lock.parse(response_json, 792, 2, 4)
-            sleepmode.parse(response_json,792, 20, 22)
-            max_waterflow.parse(response_json, 792, 26, 30)
-            extraction_quantity.parse(response_json, 792, 30, 34)
-            extraction_time.parse(response_json, 792, 34, 38)
-            holidaymode.parse(response_json,792, 38, 40)
-
-            if holidaymode.value == 3:      #mode1
-                holidaymode.value = messages_getjudo.holiday_options[2]
-            elif holidaymode.value == 5:    #mode2
-                holidaymode.value = messages_getjudo.holiday_options[3]
-            elif holidaymode.value == 9:    #lock
-                holidaymode.value = messages_getjudo.holiday_options[1]
-            else:                           #off
-                holidaymode.value = messages_getjudo.holiday_options[0]
 
             next_revision.value = int(next_revision.value/24)   #Calculation hours to days
             total_water.value =float(total_water.value/1000) # Calculating from L to m³
-            total_softwater_proportion.value = float(total_softwater_proportion.value/1000)# Calculating from L to m³
-            total_hardwater_proportion.value = round((total_water.value - total_softwater_proportion.value),3)
-            salt_stock.value /= 1000 
+
+            if config_getjudo.USE_WITH_SOFTWELL_P == False:
+                if holidaymode.value == 3:      #mode1
+                    holidaymode.value = messages_getjudo.holiday_options[2]
+                elif holidaymode.value == 5:    #mode2
+                    holidaymode.value = messages_getjudo.holiday_options[3]
+                elif holidaymode.value == 9:    #lock
+                    holidaymode.value = messages_getjudo.holiday_options[1]
+                else:                           #off
+                    holidaymode.value = messages_getjudo.holiday_options[0]
+
+                total_softwater_proportion.value = float(total_softwater_proportion.value/1000)# Calculating from L to m³
+                total_hardwater_proportion.value = round((total_water.value - total_softwater_proportion.value),3)
+                salt_stock.value /= 1000 
+                if water_lock.value > 1:
+                    water_lock.value = 1
+
             regeneration_start.value &= 0x0F
             if regeneration_start.value > 0:
                 regeneration_start.value = 1
-            if water_lock.value > 1:
-                water_lock.value = 1
+
 
             today = date.today()
             #It's 12pm...a new day. Store today's value to yesterday's value and setting a new offset for a new count
@@ -445,17 +464,35 @@ def main():
             #Hours since last regeneration / Average regeneration interval
             if regenerations.value > mydata.reg_last_val:
                 if (regenerations.value - mydata.reg_last_val) == 1: #Regeneration has started, 
-                    h_since_last_reg.value = int((int(time.time()) - mydata.reg_last_timestamp)/3600)
-                    avg_reg_interval.value = int(((mydata.reg_mean_counter-1)*mydata.reg_mean_time + h_since_last_reg.value)/mydata.reg_mean_counter)
-                    mydata.reg_mean_time = avg_reg_interval.value
-                    mydata.reg_mean_counter += 1
+                    if mydata.reg_last_timestamp != 0:
+                        h_since_last_reg.value = math.ceil((int(time.time()) - mydata.reg_last_timestamp)/3600)
+                        #neuer_mittelwert = ((counter-1)*alter_mittelwert + neuer_wert)/counter
+                        avg_reg_interval.value = math.ceil(((mydata.reg_mean_counter-1)*mydata.reg_mean_time + h_since_last_reg.value)/mydata.reg_mean_counter)
+                        mydata.reg_mean_time = avg_reg_interval.value
+                        mydata.reg_mean_counter += 1
                     mydata.reg_last_timestamp = int(time.time()) 
                     mydata.reg_last_val = regenerations.value
+                    if config_getjudo.USE_WITH_SOFTWELL_P == False:
+                        mydata.total_softwater_at_reg = total_softwater_proportion.value
+                        mydata.total_hardwater_at_reg = total_hardwater_proportion.value
                 else:
                     mydata.reg_last_val = regenerations.value
-
             if mydata.reg_last_timestamp != 0:
                 h_since_last_reg.value = int((int(time.time()) - mydata.reg_last_timestamp)/3600)
+
+            #Mix ratio Soft:Hard since last regeneration
+            if config_getjudo.USE_WITH_SOFTWELL_P == False:
+                softwater_since_reg = total_softwater_proportion.value - mydata.total_softwater_at_reg
+                hardwater_since_reg = total_hardwater_proportion.value - mydata.total_hardwater_at_reg
+                if softwater_since_reg != 0 and hardwater_since_reg !=0:
+                    totalwater_since_reg = softwater_since_reg +  hardwater_since_reg
+
+                    if hardwater_since_reg < softwater_since_reg:
+                        mixratio.value = "1:" + str(round(1/(hardwater_since_reg/totalwater_since_reg),2))
+                    else:
+                        mixratio.value = str(round(1/(softwater_since_reg/totalwater_since_reg),2)) + ":1"
+                else:
+                    mixratio.value = "unknown"
 
 
             #print("Publishing parsed values over MQTT....")
@@ -514,7 +551,6 @@ def main():
     else:
         notify.counter = 0
 #---------------------
-
 
 Function_Caller(config_getjudo.STATE_UPDATE_INTERVAL, main).start()
 

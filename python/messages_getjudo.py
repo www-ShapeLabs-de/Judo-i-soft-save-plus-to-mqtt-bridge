@@ -31,7 +31,8 @@ if config_getjudo.LANGUAGE == "DE":
         19 : "max_Entnahmemenge",
         20 : "Urlaubsmodus",
         21 : "Stunden_seit_letzter_Regeneration",
-        22 : "durchschn_Regenerationsintervall"
+        22 : "durchschn_Regenerationsintervall",
+        23 : "Mischungsverhaeltnis_Weich_Hart"
     }
 
     debug = {
@@ -169,7 +170,8 @@ else:
         19: "max_consumption",
         20: "Holiday_mode",
         21 : "Hours_since_last_regeneration",
-        22 : "Avg_regeneration_interval"
+        22 : "Avg_regeneration_interval",
+        23 : "Mix_ratio_Soft:Hard"
     }
 
     debug = {

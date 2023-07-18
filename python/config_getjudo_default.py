@@ -38,6 +38,9 @@ SODIUM_LIMIT = 200                  #Sodium limit value. Default 200mg/L (German
 
 #The environment in which the script will run. Select "True" if you want to run it in the Appdeamon, or set "False" if you want to run the script on a generic Linux.
 RUN_IN_APPDEAMON = True
+
+#Set this Flag to True, if you've a Judo Softwell P. There are no functions for leakage protection, no battery-,salt- & softwatersensor
+USE_WITH_SOFTWELL_P = False
 #-------------------------------------------------------------------------------
 
 # for Appdaemon the whole path is required "/config/appdaemon/apps/main/temp_getjudo.pkl", otherwise "temp_getjudo.pkl"
