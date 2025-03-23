@@ -309,7 +309,8 @@ availability_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/status"
 notification_topic = f"{config_getjudo.LOCATION}/{config_getjudo.NAME}/notify"
 client_id = f"{config_getjudo.NAME}-{config_getjudo.LOCATION}"
 
-http = urllib3.PoolManager()
+user_agent = {'user-agent':'Mozilla'}
+http = urllib3.PoolManager(10, headers=user_agent)
 mydata = savedata()
 
 
