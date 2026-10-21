@@ -43,7 +43,7 @@ RUN_IN_APPDEAMON = True
 USE_WITH_SOFTWELL_P = False
 #-------------------------------------------------------------------------------
 
-# for Appdaemon the whole path is required "/config/appdaemon/apps/main/temp_getjudo.pkl", otherwise "temp_getjudo.pkl"
+# for Appdaemon the whole path is required "/config/apps/main/temp_getjudo.pkl", otherwise "temp_getjudo.pkl"
 if RUN_IN_APPDEAMON == True:
     TEMP_FILE = "/config/apps/main/temp_getjudo.pkl"
 else:

@@ -48,12 +48,12 @@ class entity():
             "value_template": "{{value_json." + self.name + "}}"
         }
 
+        mqtt_entity_type = self.entity_type
         if self.entity_type == "total_increasing":
             entity_config["device_class"] = "water"
             entity_config["state_class"] = "total_increasing"
-            entity_config["state_class"] = self.entity_type
             entity_config["unit_of_measurement"] = self.unit
-            self.entity_type = "sensor"
+            mqtt_entity_type = "sensor"
 
         elif self.entity_type == "number":
             entity_config["command_topic"] = command_topic
@@ -82,7 +82,7 @@ class entity():
             print(messages_getjudo.debug[26])
             return
 
-        autoconf_topic = f"homeassistant/{self.entity_type}/{config_getjudo.LOCATION}/{config_getjudo.NAME}_{self.name}/config"
+        autoconf_topic = f"homeassistant/{mqtt_entity_type}/{config_getjudo.LOCATION}/{config_getjudo.NAME}_{self.name}/config"
         publish_json(client, autoconf_topic, entity_config)
 
     def parse(self, response, index, a,b):
@@ -556,4 +556,3 @@ def main():
 Function_Caller(config_getjudo.STATE_UPDATE_INTERVAL, main).start()
 
 notify.publish(messages_getjudo.debug[39], 2)   #Init Complete
-

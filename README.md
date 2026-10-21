@@ -146,6 +146,32 @@ mode: single
 ```
 
 
+### Water consumption statistics after MQTT reconnects
+
+The total water, total softwater and total hardwater sensors use the Home Assistant
+state class `total_increasing`. This metadata is sent in the retained MQTT discovery
+configuration, not in the periodically published state values.
+
+Older versions changed the internal sensor type when first publishing discovery.
+After an MQTT reconnect, discovery was therefore overwritten without the state class
+and Home Assistant could no longer generate long-term statistics for these sensors.
+Discovery now preserves the sensor type and sends the same metadata on every connection.
+
+After installing the updated [python/getjudo.py](python/getjudo.py), restart the bridge
+once (`sudo systemctl restart getjudo.service` for the example service above, or restart
+AppDaemon). This replaces the retained discovery configuration while preserving the
+existing entity IDs. Do not delete the existing long-term statistics to resolve this issue.
+
+### Tests
+
+Run the MQTT discovery regression tests from the repository root:
+
+```
+python3 -m unittest discover -s tests -v
+```
+
+The tests use only the Python standard library and do not connect to MQTT or the Judo cloud.
+
 ###  !!!!Attention!!!! 
 **Don't post/mail or publish your generated Token anywhere. It allows grand access to the plant!**
 
@@ -157,4 +183,3 @@ mode: single
 - https://myjudo.eu (Javascript-Files)
 
 Many thanks to this guys!!! & special thanks to [Daniel](https://github.com/danielegger1) who did the Appdeamon implementation and testing.
-
